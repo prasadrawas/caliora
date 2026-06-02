@@ -20,8 +20,7 @@ dependencies:
   firebase_analytics: ^11.4.5
   google_sign_in: ^6.2.2
 
-  # AI
-  google_generative_ai: ^0.4.6
+  # AI (using Gemini REST API via Dio)
 
   # UI & Animations
   flutter_animate: ^4.5.2
@@ -45,6 +44,8 @@ dependencies:
   path_provider: ^2.1.5
   cached_network_image: ^3.4.1
   uuid: ^4.5.1
+  logger: ^2.7.0
+  mobile_scanner: ^7.2.0
 
 dev_dependencies:
   flutter_test:
