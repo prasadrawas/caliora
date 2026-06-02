@@ -68,6 +68,7 @@ class _DiaryScreenState extends ConsumerState<DiaryScreen> {
         content: Text('${meal.mealName} deleted'),
         backgroundColor: AppColors.cardSurface,
         behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 4),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         action: SnackBarAction(
           label: 'Undo',
