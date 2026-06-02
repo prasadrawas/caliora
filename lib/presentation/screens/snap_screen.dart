@@ -286,6 +286,37 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
     }
   }
 
+  void _manualEntry() {
+    HapticFeedback.lightImpact();
+    log.i('[Snap] Manual meal entry');
+
+    setState(() {
+      _imageFile = null;
+      _result = null;
+      _error = null;
+      _nameController.clear();
+      _caloriesController.clear();
+      _proteinController.clear();
+      _carbsController.clear();
+      _fatController.clear();
+      _fiberController.clear();
+      _sugarController.clear();
+      _saturatedFatController.clear();
+      _sodiumController.clear();
+      _potassiumController.clear();
+      _calciumController.clear();
+      _ironController.clear();
+      _magnesiumController.clear();
+      _vitaminAController.clear();
+      _vitaminCController.clear();
+      _vitaminDController.clear();
+      _vitaminB12Controller.clear();
+      _servingController.text = '1 serving';
+    });
+
+    _showResultSheet();
+  }
+
   Future<void> _scanBarcode() async {
     HapticFeedback.lightImpact();
     final barcode = await Navigator.of(context).push<String>(
@@ -971,29 +1002,52 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
                 ),
               ).animate().fadeIn(duration: 300.ms).shake(hz: 2, offset: const Offset(2, 0)),
 
-            // Barcode scan button
+            // Action buttons row 1: Barcode + Manual
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: OutlinedButton.icon(
-                  onPressed: _isAnalyzing ? null : _scanBarcode,
-                  icon: const Icon(Icons.qr_code_scanner, size: 20),
-                  label: const Text('Scan Barcode'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.accentGreen,
-                    side: const BorderSide(color: AppColors.accentGreen),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: SizedBox(
+                      height: 48,
+                      child: OutlinedButton.icon(
+                        onPressed: _isAnalyzing ? null : _scanBarcode,
+                        icon: const Icon(Icons.qr_code_scanner, size: 18),
+                        label: const Text('Barcode'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.accentGreen,
+                          side: const BorderSide(color: AppColors.accentGreen),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                      ),
                     ),
                   ),
-                ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: SizedBox(
+                      height: 48,
+                      child: OutlinedButton.icon(
+                        onPressed: _isAnalyzing ? null : _manualEntry,
+                        icon: const Icon(Icons.edit_note, size: 20),
+                        label: const Text('Manual'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.white70,
+                          side: BorderSide(color: AppColors.glassBorder),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 10),
 
-            // Action buttons
+            // Action buttons row 2: Gallery + Camera
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
               child: Row(
