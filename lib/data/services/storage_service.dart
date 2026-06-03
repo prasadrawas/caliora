@@ -38,7 +38,4 @@ class StorageService {
     }
   }
 
-  Future<void> deleteMealImage(String userId, String imageUrl) async {
-    log.d('[Storage] Delete requested for: $imageUrl (skipped - requires server-side)');
-  }
 }
