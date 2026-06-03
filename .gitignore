@@ -1,6 +1,11 @@
 # Environment variables
 .env
 
+# Release signing
+android/key.properties
+**/*.jks
+**/*.keystore
+
 # Firebase config (contains API keys)
 android/app/google-services.json
 ios/Runner/GoogleService-Info.plist

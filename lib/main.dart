@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -31,23 +32,20 @@ void main() async {
 
   log.i('[App] Starting BiteBloom...');
 
-  log.d('[App] Loading .env file');
   await dotenv.load(fileName: '.env');
-  log.d('[App] GEMINI_API_KEY present: ${AppConfig.geminiApiKey.isNotEmpty}');
-  log.d('[App] Gemini model: ${AppConfig.geminiModel}');
+  if (kDebugMode) {
+    log.d('[App] GEMINI_API_KEY present: ${AppConfig.geminiApiKey.isNotEmpty}');
+    log.d('[App] Gemini model: ${AppConfig.geminiModel}');
+  }
 
-  log.d('[App] Initializing Firebase');
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  log.i('[App] Firebase initialized');
-
   // Enable Firestore offline persistence
   FirebaseFirestore.instance.settings = const Settings(
     persistenceEnabled: true,
     cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
   );
-  log.d('[App] Firestore persistence enabled');
 
   runApp(const ProviderScope(child: BiteBloomApp()));
 }
