@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../core/config/app_config.dart';
 
 class UserProfile {
   final String uid;
@@ -45,10 +46,10 @@ class UserProfile {
       activityLevel: data['activityLevel'] ?? 'moderate',
       dietaryPreference: data['dietaryPreference'] ?? 'none',
       goal: data['goal'] ?? 'maintain',
-      dailyCalorieTarget: data['dailyCalorieTarget'] ?? 2000,
-      proteinTarget: data['proteinTarget'] ?? 150,
-      carbsTarget: data['carbsTarget'] ?? 200,
-      fatTarget: data['fatTarget'] ?? 67,
+      dailyCalorieTarget: data['dailyCalorieTarget'] ?? AppConfig.defaultCalorieTarget,
+      proteinTarget: data['proteinTarget'] ?? AppConfig.defaultProteinTarget,
+      carbsTarget: data['carbsTarget'] ?? AppConfig.defaultCarbsTarget,
+      fatTarget: data['fatTarget'] ?? AppConfig.defaultFatTarget,
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
   }

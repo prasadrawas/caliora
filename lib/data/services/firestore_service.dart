@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../core/config/app_config.dart';
 import '../../core/utils/app_logger.dart';
 import '../models/user_profile.dart';
 import '../models/meal_entry.dart';
@@ -198,7 +199,7 @@ class FirestoreService {
       'totalVitaminB12': totalVitB12,
       'waterIntake': existing?.waterIntake ?? 0,
       'streak': existing?.streak ?? 0,
-      'goalMet': totalCal >= (calorieTarget * 0.9) && totalCal <= (calorieTarget * 1.1),
+      'goalMet': totalCal >= (calorieTarget * AppConfig.goalMetLower) && totalCal <= (calorieTarget * AppConfig.goalMetUpper),
     });
     log.i('[Firestore] Summary recalculated: $totalCal kcal, P:${totalP.toInt()}g C:${totalC.toInt()}g F:${totalF.toInt()}g');
   }
