@@ -13,6 +13,7 @@ import '../widgets/calorie_ring.dart';
 import '../widgets/meal_card.dart';
 import '../widgets/water_tracker.dart';
 import '../widgets/shimmer_loader.dart';
+import '../../core/theme/theme_colors.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -62,7 +63,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       children: [
         RefreshIndicator(
           color: AppColors.accentGreen,
-          backgroundColor: AppColors.cardSurface,
+          backgroundColor: C.of(context).card,
           onRefresh: () async {
             ref.invalidate(todayMealsProvider);
             ref.invalidate(dailySummaryProvider);
@@ -92,9 +93,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         const SizedBox(height: 4),
                         Text(
                           AppDateUtils.formatFullDate(DateTime.now()),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 13,
-                            color: AppColors.white30,
+                            color: C.of(context).text30,
                           ),
                         ),
                       ],
@@ -136,9 +137,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     return Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: AppColors.cardSurface,
+                        color: C.of(context).card,
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: AppColors.glassBorder),
+                        border: Border.all(color: C.of(context).glassBorder),
                       ),
                       child: Column(
                         children: [
@@ -189,9 +190,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: AppColors.cardSurface,
+                            color: C.of(context).card,
                             borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: AppColors.glassBorder),
+                            border: Border.all(color: C.of(context).glassBorder),
                           ),
                           child: Column(
                             children: [
@@ -222,7 +223,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 1000,
                                 'mg',
                                 Icons.shield_outlined,
-                                AppColors.white70,
+                                C.of(context).text70,
                               ),
                               const SizedBox(height: 14),
                               _mineralRow(
@@ -254,9 +255,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: AppColors.cardSurface,
+                            color: C.of(context).card,
                             borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: AppColors.glassBorder),
+                            border: Border.all(color: C.of(context).glassBorder),
                           ),
                           child: Column(
                             children: [
@@ -341,17 +342,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             children: [
                               Text(
                                 '$streak day streak!',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w700,
-                                  color: AppColors.white,
+                                  color: C.of(context).text,
                                 ),
                               ),
-                              const Text(
+                              Text(
                                 'Keep it up, you\'re doing great!',
                                 style: TextStyle(
                                   fontSize: 12,
-                                  color: AppColors.white54,
+                                  color: C.of(context).text54,
                                 ),
                               ),
                             ],
@@ -371,21 +372,35 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 // Water Tracker
                 summaryAsync.when(
                   data: (summary) {
+                    final currentWater = summary?.waterIntake ?? 0;
                     return WaterTracker(
-                      currentMl: summary?.waterIntake ?? 0,
+                      currentMl: currentWater,
                       onAdd: () async {
                         final user = ref.read(currentUserProvider);
                         if (user == null) return;
-                        final current = summary?.waterIntake ?? 0;
                         final today = AppDateUtils.todayKey();
                         await ref
                             .read(firestoreServiceProvider)
                             .updateWaterIntake(
                               user.uid,
                               today,
-                              current + 250,
+                              currentWater + 250,
                             );
                       },
+                      onRemove: currentWater > 0
+                          ? () async {
+                              final user = ref.read(currentUserProvider);
+                              if (user == null) return;
+                              final today = AppDateUtils.todayKey();
+                              await ref
+                                  .read(firestoreServiceProvider)
+                                  .updateWaterIntake(
+                                    user.uid,
+                                    today,
+                                    (currentWater - 250).clamp(0, 99999),
+                                  );
+                            }
+                          : null,
                     ).animate().fadeIn(duration: 500.ms, delay: 400.ms);
                   },
                   loading: () => const ShimmerLoader(height: 120),
@@ -406,9 +421,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         padding: const EdgeInsets.symmetric(
                             vertical: 40, horizontal: 24),
                         decoration: BoxDecoration(
-                          color: AppColors.cardSurface,
+                          color: C.of(context).card,
                           borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: AppColors.glassBorder),
+                          border: Border.all(color: C.of(context).glassBorder),
                         ),
                         child: Center(
                           child: Column(
@@ -420,26 +435,26 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                       .withValues(alpha: 0.08),
                                   shape: BoxShape.circle,
                                 ),
-                                child: const Icon(
+                                child: Icon(
                                   Icons.camera_alt_outlined,
                                   size: 36,
-                                  color: AppColors.white30,
+                                  color: C.of(context).text30,
                                 ),
                               ),
                               const SizedBox(height: 16),
-                              const Text(
+                              Text(
                                 'No meals logged yet',
                                 style: TextStyle(
-                                  color: AppColors.white70,
+                                  color: C.of(context).text70,
                                   fontSize: 15,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
                               const SizedBox(height: 6),
-                              const Text(
+                              Text(
                                 'Snap a photo of your meal to get started',
                                 style: TextStyle(
-                                    color: AppColors.white30, fontSize: 13),
+                                    color: C.of(context).text30, fontSize: 13),
                                 textAlign: TextAlign.center,
                               ),
                             ],
@@ -517,17 +532,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   children: [
                     Text(
                       label,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14,
-                        color: AppColors.white70,
+                        color: C.of(context).text70,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
                     Text(
                       '${current.toStringAsFixed(current < 10 ? 1 : 0)} / ${dailyTarget.toStringAsFixed(dailyTarget < 10 ? 1 : 0)} $unit',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
-                        color: AppColors.white30,
+                        color: C.of(context).text30,
                       ),
                     ),
                   ],
@@ -586,14 +601,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget _buildSectionHeader(String title, IconData icon) {
     return Row(
       children: [
-        Icon(icon, size: 20, color: AppColors.white54),
+        Icon(icon, size: 20, color: C.of(context).text54),
         const SizedBox(width: 8),
         Text(
           title,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 17,
             fontWeight: FontWeight.w700,
-            color: AppColors.white,
+            color: C.of(context).text,
           ),
         ),
       ],
@@ -614,7 +629,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           const SizedBox(height: 8),
           Text(
             message,
-            style: const TextStyle(color: AppColors.white70, fontSize: 14),
+            style: TextStyle(color: C.of(context).text70, fontSize: 14),
           ),
           if (onRetry != null) ...[
             const SizedBox(height: 12),

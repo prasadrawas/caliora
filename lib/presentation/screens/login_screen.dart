@@ -5,6 +5,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_strings.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/profile_provider.dart';
+import '../../core/theme/theme_colors.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -51,7 +52,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: C.of(context).bg,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 32),
@@ -60,21 +61,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             children: [
               const Spacer(flex: 2),
               // Logo
-              Container(
-                width: 100,
-                height: 100,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: AppColors.accentGreen.withOpacity(0.1),
-                  border: Border.all(
-                    color: AppColors.accentGreen.withOpacity(0.3),
-                    width: 2,
+              SizedBox(
+                width: 72,
+                height: 72,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(24),
+                  child: FittedBox(
+                    fit: BoxFit.cover,
+                    child: Image.asset(
+                      'assets/images/app_icon.png',
+                    ),
                   ),
-                ),
-                child: const Icon(
-                  Icons.eco_rounded,
-                  size: 48,
-                  color: AppColors.accentGreen,
                 ),
               )
                   .animate()
@@ -93,7 +90,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 'Track your nutrition with\nthe power of AI',
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: AppColors.white54,
+                      color: C.of(context).text54,
                     ),
               )
                   .animate()
@@ -106,28 +103,28 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 child: ElevatedButton(
                   onPressed: _isLoading ? null : _signInWithGoogle,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.white,
-                    foregroundColor: AppColors.background,
+                    backgroundColor: C.of(context).text,
+                    foregroundColor: C.of(context).bg,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                     ),
                   ),
                   child: _isLoading
-                      ? const SizedBox(
+                      ? SizedBox(
                           width: 24,
                           height: 24,
                           child: CircularProgressIndicator(
                             strokeWidth: 2.5,
-                            color: AppColors.background,
+                            color: C.of(context).bg,
                           ),
                         )
                       : Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.g_mobiledata,
                               size: 28,
-                              color: AppColors.background,
+                              color: C.of(context).bg,
                             ),
                             const SizedBox(width: 12),
                             const Text(

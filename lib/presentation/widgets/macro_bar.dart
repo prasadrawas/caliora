@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/theme_colors.dart';
 
 class MacroBar extends StatelessWidget {
   final String label;
@@ -43,9 +44,9 @@ class MacroBar extends StatelessWidget {
                 const SizedBox(width: 6),
                 Text(
                   label,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 13,
-                    color: AppColors.white70,
+                    color: C.of(context).text70,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -63,9 +64,9 @@ class MacroBar extends StatelessWidget {
                 ),
                 Text(
                   ' / ${target.toInt()}$unit',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
-                    color: AppColors.white30,
+                    color: C.of(context).text30,
                     fontWeight: FontWeight.w500,
                   ),
                 ),

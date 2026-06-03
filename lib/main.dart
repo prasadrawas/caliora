@@ -7,6 +7,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'firebase_options.dart';
 import 'core/theme/app_theme.dart';
 import 'core/utils/app_logger.dart';
+import 'providers/theme_provider.dart';
 import 'presentation/screens/splash_screen.dart';
 import 'presentation/screens/login_screen.dart';
 import 'presentation/screens/onboarding_screen.dart';
@@ -49,15 +50,18 @@ void main() async {
   runApp(const ProviderScope(child: CalioraApp()));
 }
 
-class CalioraApp extends StatelessWidget {
+class CalioraApp extends ConsumerWidget {
   const CalioraApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final themeMode = ref.watch(themeModeProvider);
     return MaterialApp(
       title: 'Caliora',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.darkTheme,
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: themeMode,
       initialRoute: '/',
       onGenerateRoute: (settings) {
         Widget page;

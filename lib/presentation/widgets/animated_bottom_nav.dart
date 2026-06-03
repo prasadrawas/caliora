@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/theme_colors.dart';
 
 class AnimatedBottomNav extends StatelessWidget {
   final int currentIndex;
@@ -25,9 +26,9 @@ class AnimatedBottomNav extends StatelessWidget {
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       decoration: BoxDecoration(
-        color: AppColors.cardSurface,
+        color: C.of(context).card,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppColors.glassBorder),
+        border: Border.all(color: C.of(context).glassBorder),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.3),
@@ -62,7 +63,7 @@ class AnimatedBottomNav extends StatelessWidget {
                 children: [
                   Icon(
                     item.icon,
-                    color: isSelected ? AppColors.accentGreen : AppColors.white54,
+                    color: isSelected ? AppColors.accentGreen : C.of(context).text54,
                     size: 22,
                   ),
                   if (isSelected) ...[

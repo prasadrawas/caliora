@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/utils/app_logger.dart';
+import '../../core/theme/theme_colors.dart';
 
 class BarcodeScreen extends StatefulWidget {
   const BarcodeScreen({super.key});
@@ -74,15 +75,15 @@ class _BarcodeScreenState extends State<BarcodeScreen> {
                       Text(
                         'Camera error: ${error.errorCode.name}',
                         textAlign: TextAlign.center,
-                        style: const TextStyle(
-                            color: AppColors.white70, fontSize: 14),
+                        style: TextStyle(
+                            color: C.of(context).text70, fontSize: 14),
                       ),
                       const SizedBox(height: 8),
-                      const Text(
+                      Text(
                         'Please grant camera permission in settings',
                         textAlign: TextAlign.center,
                         style:
-                            TextStyle(color: AppColors.white30, fontSize: 12),
+                            TextStyle(color: C.of(context).text30, fontSize: 12),
                       ),
                     ],
                   ),
@@ -182,11 +183,11 @@ class _BarcodeScreenState extends State<BarcodeScreen> {
                     color: Colors.black.withValues(alpha: 0.7),
                     borderRadius: BorderRadius.circular(16),
                   ),
-                  child: const Row(
+                  child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(Icons.info_outline,
-                          color: AppColors.white54, size: 18),
+                          color: C.of(context).text54, size: 18),
                       SizedBox(width: 10),
                       Flexible(
                         child: Text(

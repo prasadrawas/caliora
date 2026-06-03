@@ -5,11 +5,14 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/utils/date_utils.dart';
+import '../../data/models/daily_summary.dart';
+import '../../data/models/user_profile.dart';
 import '../../data/models/weight_log.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/profile_provider.dart';
 import '../../providers/progress_provider.dart';
 import '../widgets/shimmer_loader.dart';
+import '../../core/theme/theme_colors.dart';
 
 class ProgressScreen extends ConsumerStatefulWidget {
   const ProgressScreen({super.key});
@@ -73,8 +76,8 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
             EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
         child: Container(
           padding: const EdgeInsets.all(24),
-          decoration: const BoxDecoration(
-            color: AppColors.background,
+          decoration: BoxDecoration(
+            color: C.of(context).bg,
             borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
           ),
           child: Column(
@@ -86,40 +89,40 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: AppColors.white30,
+                    color: C.of(context).text30,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
               ),
               const SizedBox(height: 20),
-              const Text(
+              Text(
                 'Log Weight',
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.white,
+                  color: C.of(context).text,
                 ),
               ),
               const SizedBox(height: 4),
-              const Text(
+              Text(
                 'Track your weight regularly for better insights',
-                style: TextStyle(fontSize: 13, color: AppColors.white30),
+                style: TextStyle(fontSize: 13, color: C.of(context).text30),
               ),
               const SizedBox(height: 20),
               TextField(
                 controller: _weightController,
                 keyboardType: TextInputType.number,
                 autofocus: true,
-                style: const TextStyle(
-                    color: AppColors.white,
+                style: TextStyle(
+                    color: C.of(context).text,
                     fontSize: 24,
                     fontWeight: FontWeight.w600),
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Weight (kg)',
                   prefixIcon: Icon(Icons.monitor_weight_outlined,
-                      color: AppColors.white54),
+                      color: C.of(context).text54),
                   suffixText: 'kg',
-                  suffixStyle: TextStyle(color: AppColors.white30),
+                  suffixStyle: TextStyle(color: C.of(context).text30),
                 ),
               ),
               const SizedBox(height: 20),
@@ -141,6 +144,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final profileAsync = ref.watch(userProfileProvider);
     final isMonthly = ref.watch(isMonthlyViewProvider);
     final progressAsync = isMonthly
         ? ref.watch(monthlyProgressProvider)
@@ -166,9 +170,9 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
               Container(
                 padding: const EdgeInsets.all(3),
                 decoration: BoxDecoration(
-                  color: AppColors.cardSurface,
+                  color: C.of(context).card,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.glassBorder),
+                  border: Border.all(color: C.of(context).glassBorder),
                 ),
                 child: Row(
                   children: [
@@ -187,73 +191,18 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
           ),
           const SizedBox(height: 20),
 
-          // Insights card
-          progressAsync.when(
-            data: (summaries) {
-              final activeDays =
-                  summaries.where((s) => s.totalCalories > 0).length;
-              final avgCal = activeDays > 0
-                  ? summaries
-                          .where((s) => s.totalCalories > 0)
-                          .fold<int>(0, (s, e) => s + e.totalCalories) ~/
-                      activeDays
-                  : 0;
-              if (avgCal == 0) return const SizedBox.shrink();
-
-              return Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      AppColors.accentGreen.withValues(alpha: 0.08),
-                      AppColors.accentGreen.withValues(alpha: 0.02),
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                      color: AppColors.accentGreen.withValues(alpha: 0.15)),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color:
-                            AppColors.accentGreen.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Icon(Icons.insights,
-                          color: AppColors.accentGreen, size: 22),
-                    ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Avg $avgCal kcal/day',
-                            style: const TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.white,
-                            ),
-                          ),
-                          Text(
-                            '$activeDays active days this ${isMonthly ? 'month' : 'week'}',
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: AppColors.white54,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              )
-                  .animate()
-                  .fadeIn(duration: 500.ms)
-                  .slideY(begin: 0.1, end: 0);
+          // Nutrition Report Card
+          profileAsync.when(
+            data: (profile) {
+              if (profile == null) return const SizedBox.shrink();
+              return progressAsync.when(
+                data: (summaries) {
+                  return _buildNutritionReport(
+                    summaries, profile, isMonthly);
+                },
+                loading: () => const SizedBox.shrink(),
+                error: (_, _) => const SizedBox.shrink(),
+              );
             },
             loading: () => const SizedBox.shrink(),
             error: (_, _) => const SizedBox.shrink(),
@@ -272,9 +221,9 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
                 height: 200,
                 padding: const EdgeInsets.fromLTRB(8, 16, 16, 8),
                 decoration: BoxDecoration(
-                  color: AppColors.cardSurface,
+                  color: C.of(context).card,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: AppColors.glassBorder),
+                  border: Border.all(color: C.of(context).glassBorder),
                 ),
                 child: BarChart(
                   BarChartData(
@@ -285,12 +234,12 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
                         1.2,
                     barTouchData: BarTouchData(
                       touchTooltipData: BarTouchTooltipData(
-                        getTooltipColor: (_) => AppColors.secondary,
+                        getTooltipColor: (_) => C.of(context).secondary,
                         getTooltipItem: (group, groupIndex, rod, rodIndex) {
                           return BarTooltipItem(
                             '${rod.toY.toInt()} kcal',
-                            const TextStyle(
-                              color: AppColors.white,
+                            TextStyle(
+                              color: C.of(context).text,
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
                             ),
@@ -317,9 +266,9 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
                                 isMonthly
                                     ? '${date.day}'
                                     : AppDateUtils.formatWeekday(date),
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 10,
-                                  color: AppColors.white30,
+                                  color: C.of(context).text30,
                                 ),
                               ),
                             );
@@ -429,9 +378,9 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
                 height: 200,
                 padding: const EdgeInsets.fromLTRB(8, 16, 16, 8),
                 decoration: BoxDecoration(
-                  color: AppColors.cardSurface,
+                  color: C.of(context).card,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: AppColors.glassBorder),
+                  border: Border.all(color: C.of(context).glassBorder),
                 ),
                 child: LineChart(
                   LineChartData(
@@ -453,8 +402,8 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
                               padding: const EdgeInsets.only(top: 8),
                               child: Text(
                                 AppDateUtils.formatDayMonth(date),
-                                style: const TextStyle(
-                                    fontSize: 10, color: AppColors.white30),
+                                style: TextStyle(
+                                    fontSize: 10, color: C.of(context).text30),
                               ),
                             );
                           },
@@ -485,7 +434,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
                             radius: 4,
                             color: AppColors.accentGreen,
                             strokeWidth: 2,
-                            strokeColor: AppColors.background,
+                            strokeColor: C.of(context).bg,
                           ),
                         ),
                         belowBarData: BarAreaData(
@@ -503,13 +452,13 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
                     ],
                     lineTouchData: LineTouchData(
                       touchTooltipData: LineTouchTooltipData(
-                        getTooltipColor: (_) => AppColors.secondary,
+                        getTooltipColor: (_) => C.of(context).secondary,
                         getTooltipItems: (spots) {
                           return spots.map((spot) {
                             return LineTooltipItem(
                               '${spot.y.toStringAsFixed(1)} kg',
-                              const TextStyle(
-                                color: AppColors.white,
+                              TextStyle(
+                                color: C.of(context).text,
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
                               ),
@@ -549,9 +498,9 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
               return Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: AppColors.cardSurface,
+                  color: C.of(context).card,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: AppColors.glassBorder),
+                  border: Border.all(color: C.of(context).glassBorder),
                 ),
                 child: Row(
                   children: [
@@ -568,9 +517,9 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
                               color: AppColors.protein,
                               radius: 38,
                               title: '${(p / total * 100).toInt()}%',
-                              titleStyle: const TextStyle(
+                              titleStyle: TextStyle(
                                   fontSize: 11,
-                                  color: AppColors.white,
+                                  color: C.of(context).text,
                                   fontWeight: FontWeight.w700),
                             ),
                             PieChartSectionData(
@@ -578,9 +527,9 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
                               color: AppColors.carbs,
                               radius: 38,
                               title: '${(c / total * 100).toInt()}%',
-                              titleStyle: const TextStyle(
+                              titleStyle: TextStyle(
                                   fontSize: 11,
-                                  color: AppColors.white,
+                                  color: C.of(context).text,
                                   fontWeight: FontWeight.w700),
                             ),
                             PieChartSectionData(
@@ -588,9 +537,9 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
                               color: AppColors.fat,
                               radius: 38,
                               title: '${(f / total * 100).toInt()}%',
-                              titleStyle: const TextStyle(
+                              titleStyle: TextStyle(
                                   fontSize: 11,
-                                  color: AppColors.white,
+                                  color: C.of(context).text,
                                   fontWeight: FontWeight.w700),
                             ),
                           ],
@@ -626,17 +575,230 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
     );
   }
 
+  Widget _buildNutritionReport(
+      List<DailySummary> summaries, UserProfile profile, bool isMonthly) {
+    final active = summaries.where((s) => s.totalCalories > 0).toList();
+    if (active.isEmpty) return const SizedBox.shrink();
+
+    final period = isMonthly ? 'month' : 'week';
+    final totalDays = isMonthly ? 30 : 7;
+
+    // Averages
+    final avgCal = active.fold<int>(0, (s, e) => s + e.totalCalories) ~/ active.length;
+    final avgProtein = active.fold<double>(0, (s, e) => s + e.totalProtein) / active.length;
+    final avgCarbs = active.fold<double>(0, (s, e) => s + e.totalCarbs) / active.length;
+    final avgFat = active.fold<double>(0, (s, e) => s + e.totalFat) / active.length;
+    final avgFiber = active.fold<double>(0, (s, e) => s + e.totalFiber) / active.length;
+    final avgSugar = active.fold<double>(0, (s, e) => s + e.totalSugar) / active.length;
+
+    // Days below target
+    final lowProteinDays = active.where((s) => s.totalProtein < profile.proteinTarget * 0.8).length;
+    final lowFiberDays = active.where((s) => s.totalFiber < 20).length;
+    final highSugarDays = active.where((s) => s.totalSugar > 50).length;
+    final goalMetDays = active.where((s) => s.goalMet).length;
+
+    // Calorie trend (compare first half vs second half)
+    String calorieTrend = '';
+    if (active.length >= 4) {
+      final mid = active.length ~/ 2;
+      final firstHalfAvg = active.sublist(0, mid).fold<int>(0, (s, e) => s + e.totalCalories) ~/ mid;
+      final secondHalfAvg = active.sublist(mid).fold<int>(0, (s, e) => s + e.totalCalories) ~/ (active.length - mid);
+      final diff = secondHalfAvg - firstHalfAvg;
+      if (diff.abs() > 100) {
+        calorieTrend = diff > 0
+            ? 'Calories trending up (+${diff} kcal/day)'
+            : 'Calories trending down (${diff} kcal/day)';
+      }
+    }
+
+    // Build insights list
+    final insights = <_Insight>[];
+
+    insights.add(_Insight(
+      icon: Icons.local_fire_department,
+      text: 'Avg $avgCal kcal/day across ${active.length} active days',
+      color: AppColors.accentGreen,
+    ));
+
+    if (goalMetDays > 0) {
+      insights.add(_Insight(
+        icon: Icons.check_circle,
+        text: 'Hit calorie goal on $goalMetDays of ${active.length} days',
+        color: AppColors.accentGreen,
+      ));
+    }
+
+    if (calorieTrend.isNotEmpty) {
+      insights.add(_Insight(
+        icon: Icons.trending_up,
+        text: calorieTrend,
+        color: AppColors.warning,
+      ));
+    }
+
+    if (lowProteinDays > 0) {
+      insights.add(_Insight(
+        icon: Icons.fitness_center,
+        text: 'Protein was low on $lowProteinDays days (avg ${avgProtein.toInt()}g, target ${profile.proteinTarget}g)',
+        color: AppColors.protein,
+      ));
+    }
+
+    if (lowFiberDays > 0) {
+      insights.add(_Insight(
+        icon: Icons.eco,
+        text: 'Fiber below 20g on $lowFiberDays days (avg ${avgFiber.toInt()}g)',
+        color: AppColors.fiber,
+      ));
+    }
+
+    if (highSugarDays > 0) {
+      insights.add(_Insight(
+        icon: Icons.cookie_outlined,
+        text: 'Sugar exceeded 50g on $highSugarDays days (avg ${avgSugar.toInt()}g)',
+        color: AppColors.error,
+      ));
+    }
+
+    if (active.length < totalDays * 0.5) {
+      insights.add(_Insight(
+        icon: Icons.calendar_today,
+        text: 'Only logged ${active.length} of $totalDays days — try logging more consistently',
+        color: AppColors.warning,
+      ));
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: C.of(context).card,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: C.of(context).glassBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppColors.accentGreen.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.assessment,
+                    color: AppColors.accentGreen, size: 22),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                '${isMonthly ? 'Monthly' : 'Weekly'} Report',
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w700,
+                  color: C.of(context).text,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // Macro averages row
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: C.of(context).bg,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _avgStat('Calories', '$avgCal', 'kcal/day', AppColors.accentGreen),
+                _avgDivider(),
+                _avgStat('Protein', '${avgProtein.toInt()}g', '/day', AppColors.protein),
+                _avgDivider(),
+                _avgStat('Carbs', '${avgCarbs.toInt()}g', '/day', AppColors.carbs),
+                _avgDivider(),
+                _avgStat('Fat', '${avgFat.toInt()}g', '/day', AppColors.fat),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+
+          // Insights
+          ...insights.map((insight) => Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: insight.color.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(insight.icon, color: insight.color, size: 16),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        insight.text,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: C.of(context).text70,
+                          height: 1.4,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              )),
+        ],
+      ),
+    )
+        .animate()
+        .fadeIn(duration: 500.ms)
+        .slideY(begin: 0.1, end: 0);
+  }
+
+  Widget _avgStat(String label, String value, String unit, Color color) {
+    return Column(
+      children: [
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w800,
+            color: color,
+          ),
+        ),
+        Text(
+          unit,
+          style: TextStyle(fontSize: 10, color: C.of(context).text30),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          label,
+          style: TextStyle(fontSize: 10, color: C.of(context).text54),
+        ),
+      ],
+    );
+  }
+
+  Widget _avgDivider() {
+    return Container(width: 1, height: 32, color: C.of(context).glassBorder);
+  }
+
   Widget _sectionHeader(String title, IconData icon) {
     return Row(
       children: [
-        Icon(icon, size: 18, color: AppColors.white54),
+        Icon(icon, size: 18, color: C.of(context).text54),
         const SizedBox(width: 8),
         Text(
           title,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w700,
-            color: AppColors.white,
+            color: C.of(context).text,
           ),
         ),
       ],
@@ -648,15 +810,15 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
       height: 150,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: AppColors.cardSurface,
+        color: C.of(context).card,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.glassBorder),
+        border: Border.all(color: C.of(context).glassBorder),
       ),
       child: Center(
         child: Text(
           message,
           textAlign: TextAlign.center,
-          style: const TextStyle(color: AppColors.white30, fontSize: 14),
+          style: TextStyle(color: C.of(context).text30, fontSize: 14),
         ),
       ),
     );
@@ -676,7 +838,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(message,
-                style: const TextStyle(color: AppColors.white54)),
+                style: TextStyle(color: C.of(context).text54)),
             const SizedBox(height: 8),
             GestureDetector(
               onTap: onRetry,
@@ -705,7 +867,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
           style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w600,
-            color: isActive ? AppColors.background : AppColors.white54,
+            color: isActive ? C.of(context).bg : C.of(context).text54,
           ),
         ),
       ),
@@ -726,7 +888,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
         const SizedBox(width: 8),
         Text(
           label,
-          style: const TextStyle(fontSize: 13, color: AppColors.white54),
+          style: TextStyle(fontSize: 13, color: C.of(context).text54),
         ),
         const Spacer(),
         Text(
@@ -740,4 +902,16 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
       ],
     );
   }
+}
+
+class _Insight {
+  final IconData icon;
+  final String text;
+  final Color color;
+
+  const _Insight({
+    required this.icon,
+    required this.text,
+    required this.color,
+  });
 }

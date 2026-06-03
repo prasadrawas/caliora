@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_strings.dart';
+import '../../core/theme/theme_colors.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -55,7 +56,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: C.of(context).bg,
       body: SafeArea(
         child: Column(
           children: [
@@ -65,9 +66,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               child: TextButton(
                 onPressed: () =>
                     Navigator.of(context).pushReplacementNamed('/profile-setup'),
-                child: const Text(
+                child: Text(
                   'Skip',
-                  style: TextStyle(color: AppColors.white54),
+                  style: TextStyle(color: C.of(context).text54),
                 ),
               ),
             ),
@@ -119,7 +120,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         Text(
                           page.description,
                           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                color: AppColors.white54,
+                                color: C.of(context).text54,
                               ),
                           textAlign: TextAlign.center,
                         )
@@ -143,7 +144,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   decoration: BoxDecoration(
                     color: i == _currentPage
                         ? AppColors.accentGreen
-                        : AppColors.white30,
+                        : C.of(context).text30,
                     borderRadius: BorderRadius.circular(4),
                   ),
                 );

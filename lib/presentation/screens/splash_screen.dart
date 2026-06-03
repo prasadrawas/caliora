@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_strings.dart';
 import '../../core/utils/app_logger.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/profile_provider.dart';
+import '../../core/theme/theme_colors.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
@@ -31,16 +33,30 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
 
   Future<void> _navigateAfterDelay() async {
     log.i('[Splash] Waiting for auth state...');
-    // Wait for Firebase Auth to resolve the persisted session first
-    final authFuture = ref.read(authServiceProvider).authStateChanges.first;
-    // Run both in parallel — animation plays while auth resolves
-    final results = await Future.wait([
-      authFuture,
-      Future.delayed(const Duration(seconds: 3)),
-    ]);
+
+    // Wait for splash animation
+    await Future.delayed(const Duration(seconds: 3));
     if (!mounted) return;
 
-    final authState = results[0];
+    // Check current user directly — Firebase persists auth state
+    // authStateChanges.first can emit null before restoring session
+    User? authState = FirebaseAuth.instance.currentUser;
+    log.d('[Splash] currentUser: ${authState?.uid ?? "null"}');
+
+    // If null, wait briefly for auth state stream in case it's still loading
+    if (authState == null) {
+      log.d('[Splash] Waiting for authStateChanges...');
+      authState = await ref
+          .read(authServiceProvider)
+          .authStateChanges
+          .firstWhere((user) => user != null, orElse: () => null)
+          .timeout(
+            const Duration(seconds: 3),
+            onTimeout: () => null,
+          );
+      log.d('[Splash] Stream resolved: ${authState?.uid ?? "null"}');
+    }
+    if (!mounted) return;
 
     if (authState == null) {
       log.i('[Splash] No user session → Login');
@@ -74,12 +90,12 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: C.of(context).bg,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Animated logo: plate/leaf morphing icon
+            // App icon with glow
             AnimatedBuilder(
               animation: _controller,
               builder: (context, child) {
@@ -89,30 +105,32 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                   children: [
                     // Glow behind icon
                     Container(
-                      width: 120,
-                      height: 120,
+                      width: 140,
+                      height: 140,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
                             color: AppColors.accentGreen
-                                .withOpacity(0.3 * progress),
-                            blurRadius: 40,
-                            spreadRadius: 10,
+                                .withValues(alpha: 0.3 * progress),
+                            blurRadius: 50,
+                            spreadRadius: 15,
                           ),
                         ],
                       ),
                     ),
-                    // Icon transition
-                    Icon(
-                      progress < 0.5
-                          ? Icons.restaurant_menu
-                          : Icons.check_circle_outline,
-                      size: 80 + (20 * progress),
-                      color: Color.lerp(
-                        AppColors.accentGreen.withOpacity(0.6),
-                        AppColors.accentGreen,
-                        progress,
+                    // App icon
+                    SizedBox(
+                      width: 72 + (8 * progress),
+                      height: 72 + (8 * progress),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(24),
+                        child: FittedBox(
+                          fit: BoxFit.cover,
+                          child: Image.asset(
+                            'assets/images/app_icon.png',
+                          ),
+                        ),
                       ),
                     ),
                   ],
@@ -134,7 +152,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
             Text(
               AppStrings.tagline,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColors.white54,
+                    color: C.of(context).text54,
                   ),
             )
                 .animate()

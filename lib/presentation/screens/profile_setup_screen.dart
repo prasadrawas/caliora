@@ -6,6 +6,7 @@ import '../../core/utils/nutrition_calculator.dart';
 import '../../data/models/user_profile.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/profile_provider.dart';
+import '../../core/theme/theme_colors.dart';
 
 class ProfileSetupScreen extends ConsumerStatefulWidget {
   const ProfileSetupScreen({super.key});
@@ -142,7 +143,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
     }
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: C.of(context).bg,
       appBar: AppBar(
         title: const Text('Setup Your Profile'),
         leading: _currentPage > 0
@@ -167,7 +168,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                       decoration: BoxDecoration(
                         color: i <= _currentPage
                             ? AppColors.accentGreen
-                            : AppColors.white12,
+                            : C.of(context).text12,
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
@@ -204,12 +205,12 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                           ? _saveProfile
                           : _nextPage,
                   child: _isSaving
-                      ? const SizedBox(
+                      ? SizedBox(
                           width: 24,
                           height: 24,
                           child: CircularProgressIndicator(
                             strokeWidth: 2.5,
-                            color: AppColors.background,
+                            color: C.of(context).bg,
                           ),
                         )
                       : Text(_currentPage == _totalPages - 1
@@ -319,7 +320,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
             style: Theme.of(context)
                 .textTheme
                 .bodyMedium
-                ?.copyWith(color: AppColors.white54),
+                ?.copyWith(color: C.of(context).text54),
           ).animate().fadeIn(duration: 500.ms, delay: 100.ms),
           const SizedBox(height: 32),
           _buildOptionCard(
@@ -410,12 +411,12 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                   decoration: BoxDecoration(
                     color: isSelected
                         ? AppColors.accentGreen.withOpacity(0.15)
-                        : AppColors.cardSurface,
+                        : C.of(context).card,
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
                       color: isSelected
                           ? AppColors.accentGreen
-                          : AppColors.glassBorder,
+                          : C.of(context).glassBorder,
                       width: isSelected ? 2 : 1,
                     ),
                   ),
@@ -424,7 +425,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                     style: TextStyle(
                       fontSize: 13,
                       color:
-                          isSelected ? AppColors.accentGreen : AppColors.white54,
+                          isSelected ? AppColors.accentGreen : C.of(context).text54,
                       fontWeight:
                           isSelected ? FontWeight.w600 : FontWeight.normal,
                     ),
@@ -456,7 +457,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
             style: Theme.of(context)
                 .textTheme
                 .bodyMedium
-                ?.copyWith(color: AppColors.white54),
+                ?.copyWith(color: C.of(context).text54),
           ).animate().fadeIn(duration: 500.ms, delay: 100.ms),
           const SizedBox(height: 32),
           _buildOptionCard(
@@ -507,10 +508,10 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
       controller: controller,
       keyboardType: keyboardType,
       validator: validator,
-      style: const TextStyle(color: AppColors.white),
+      style: TextStyle(color: C.of(context).text),
       decoration: InputDecoration(
         labelText: label,
-        prefixIcon: Icon(icon, color: AppColors.white54),
+        prefixIcon: Icon(icon, color: C.of(context).text54),
       ),
     )
         .animate()
@@ -536,10 +537,10 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
         decoration: BoxDecoration(
           color: isSelected
               ? AppColors.accentGreen.withOpacity(0.15)
-              : AppColors.cardSurface,
+              : C.of(context).card,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isSelected ? AppColors.accentGreen : AppColors.glassBorder,
+            color: isSelected ? AppColors.accentGreen : C.of(context).glassBorder,
             width: isSelected ? 2 : 1,
           ),
         ),
@@ -547,7 +548,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
           children: [
             Icon(
               icon,
-              color: isSelected ? AppColors.accentGreen : AppColors.white54,
+              color: isSelected ? AppColors.accentGreen : C.of(context).text54,
               size: 28,
             ),
             const SizedBox(width: 16),
@@ -559,7 +560,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                     label,
                     style: TextStyle(
                       fontSize: 16,
-                      color: isSelected ? AppColors.white : AppColors.white70,
+                      color: isSelected ? C.of(context).text : C.of(context).text70,
                       fontWeight:
                           isSelected ? FontWeight.w600 : FontWeight.normal,
                     ),
@@ -571,8 +572,8 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                       style: TextStyle(
                         fontSize: 12,
                         color: isSelected
-                            ? AppColors.white54
-                            : AppColors.white30,
+                            ? C.of(context).text54
+                            : C.of(context).text30,
                       ),
                     ),
                   ],

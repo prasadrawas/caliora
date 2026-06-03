@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/theme_colors.dart';
 
 class CalorieRing extends StatelessWidget {
   final int consumed;
@@ -49,6 +50,7 @@ class CalorieRing extends StatelessWidget {
             painter: _RingPainter(
               progress: progress,
               isOver: isOver,
+              ringBgColor: C.of(context).text,
             ),
           ),
           Column(
@@ -59,7 +61,7 @@ class CalorieRing extends StatelessWidget {
                 style: TextStyle(
                   fontSize: size * 0.2,
                   fontWeight: FontWeight.w800,
-                  color: isOver ? AppColors.error : AppColors.white,
+                  color: isOver ? AppColors.error : C.of(context).text,
                   letterSpacing: -1,
                   height: 1.1,
                 ),
@@ -69,7 +71,7 @@ class CalorieRing extends StatelessWidget {
                 'of $target kcal',
                 style: TextStyle(
                   fontSize: size * 0.065,
-                  color: AppColors.white54,
+                  color: C.of(context).text54,
                   letterSpacing: 0.3,
                 ),
               ),
@@ -109,8 +111,9 @@ class CalorieRing extends StatelessWidget {
 class _RingPainter extends CustomPainter {
   final double progress;
   final bool isOver;
+  final Color ringBgColor;
 
-  _RingPainter({required this.progress, required this.isOver});
+  _RingPainter({required this.progress, required this.isOver, required this.ringBgColor});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -120,7 +123,7 @@ class _RingPainter extends CustomPainter {
 
     // Background ring
     final bgPaint = Paint()
-      ..color = AppColors.white.withValues(alpha: 0.06)
+      ..color = ringBgColor.withValues(alpha: 0.06)
       ..style = PaintingStyle.stroke
       ..strokeWidth = strokeWidth
       ..strokeCap = StrokeCap.round;

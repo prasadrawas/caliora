@@ -4,6 +4,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/utils/date_utils.dart';
 import '../../data/models/meal_entry.dart';
+import '../../core/theme/theme_colors.dart';
 
 class MealCard extends StatelessWidget {
   final MealEntry meal;
@@ -28,9 +29,9 @@ class MealCard extends StatelessWidget {
         margin: const EdgeInsets.symmetric(vertical: 4),
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: AppColors.cardSurface,
+          color: C.of(context).card,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.glassBorder),
+          border: Border.all(color: C.of(context).glassBorder),
         ),
         child: Column(
           children: [
@@ -46,10 +47,10 @@ class MealCard extends StatelessWidget {
                         ? CachedNetworkImage(
                             imageUrl: meal.imageUrl!,
                             fit: BoxFit.cover,
-                            placeholder: (_, _) => _buildPlaceholder(),
-                            errorWidget: (_, _, _) => _buildPlaceholder(),
+                            placeholder: (_, _) => _buildPlaceholder(context),
+                            errorWidget: (_, _, _) => _buildPlaceholder(context),
                           )
-                        : _buildPlaceholder(),
+                        : _buildPlaceholder(context),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -60,10 +61,10 @@ class MealCard extends StatelessWidget {
                     children: [
                       Text(
                         meal.mealName,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.white,
+                          color: C.of(context).text,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -71,9 +72,9 @@ class MealCard extends StatelessWidget {
                       const SizedBox(height: 3),
                       Text(
                         '${meal.servingSize} • ${AppDateUtils.formatTime(meal.timestamp)}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
-                          color: AppColors.white54,
+                          color: C.of(context).text54,
                         ),
                       ),
                     ],
@@ -145,11 +146,11 @@ class MealCard extends StatelessWidget {
     return card;
   }
 
-  Widget _buildPlaceholder() {
+  Widget _buildPlaceholder(BuildContext context) {
     return Container(
-      color: AppColors.secondary,
+      color: C.of(context).secondary,
       child:
-          const Icon(Icons.restaurant, color: AppColors.white30, size: 22),
+          Icon(Icons.restaurant, color: C.of(context).text30, size: 22),
     );
   }
 

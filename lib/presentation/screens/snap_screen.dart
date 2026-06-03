@@ -10,10 +10,12 @@ import '../../core/utils/app_logger.dart';
 import '../../data/models/meal_entry.dart';
 import '../../data/services/barcode_service.dart';
 import '../../data/services/gemini_service.dart';
+import '../../data/services/scan_limit_service.dart';
 import '../../data/services/storage_service.dart';
 import 'barcode_screen.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/profile_provider.dart';
+import '../../core/theme/theme_colors.dart';
 
 class SnapScreen extends ConsumerStatefulWidget {
   const SnapScreen({super.key});
@@ -122,8 +124,8 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
             EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
         child: Container(
           padding: const EdgeInsets.all(24),
-          decoration: const BoxDecoration(
-            color: AppColors.background,
+          decoration: BoxDecoration(
+            color: C.of(context).bg,
             borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
           ),
           child: Column(
@@ -135,7 +137,7 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: AppColors.white30,
+                    color: C.of(context).text30,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -153,7 +155,7 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
                         color: AppColors.accentGreen, size: 22),
                   ),
                   const SizedBox(width: 12),
-                  const Column(
+                  Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
@@ -161,12 +163,12 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
-                          color: AppColors.white,
+                          color: C.of(context).text,
                         ),
                       ),
                       Text(
                         'Optional — helps AI estimate better',
-                        style: TextStyle(fontSize: 12, color: AppColors.white30),
+                        style: TextStyle(fontSize: 12, color: C.of(context).text30),
                       ),
                     ],
                   ),
@@ -177,11 +179,11 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
                 controller: _notesController,
                 maxLines: 3,
                 autofocus: true,
-                style: const TextStyle(color: AppColors.white),
-                decoration: const InputDecoration(
+                style: TextStyle(color: C.of(context).text),
+                decoration: InputDecoration(
                   hintText:
                       'e.g. "2 chapatis, 1 bowl dal, oil-free prep, ~200g rice"',
-                  hintStyle: TextStyle(color: AppColors.white30, fontSize: 13),
+                  hintStyle: TextStyle(color: C.of(context).text30, fontSize: 13),
                   labelText: 'Notes about this meal',
                   alignLabelWithHint: true,
                 ),
@@ -198,8 +200,8 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
                           _analyzeImage();
                         },
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: AppColors.white70,
-                          side: BorderSide(color: AppColors.glassBorder),
+                          foregroundColor: C.of(context).text70,
+                          side: BorderSide(color: C.of(context).glassBorder),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(14),
                           ),
@@ -233,8 +235,30 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
     );
   }
 
+  final _scanLimitService = ScanLimitService();
+
+  Future<bool> _checkScanLimit() async {
+    final user = ref.read(currentUserProvider);
+    if (user == null) return false;
+
+    final canScan = await _scanLimitService.canScan(user.uid);
+    if (!canScan) {
+      final count = await _scanLimitService.getTodayCount(user.uid);
+      if (!mounted) return false;
+      setState(() => _error =
+          'Daily scan limit reached ($count/${ScanLimitService.dailyLimit}). Limit resets at midnight. Use Manual entry instead.');
+      return false;
+    }
+    return true;
+  }
+
   Future<void> _analyzeImage() async {
     if (_imageFile == null) return;
+
+    final user = ref.read(currentUserProvider);
+    if (user == null) return;
+
+    if (!await _checkScanLimit()) return;
 
     setState(() {
       _isAnalyzing = true;
@@ -253,6 +277,7 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
       final result = await gemini.analyzeFood(_imageFile!, notes: notes);
 
       if (result != null && mounted) {
+        await _scanLimitService.incrementCount(user.uid);
         HapticFeedback.mediumImpact();
         setState(() {
           _result = result;
@@ -319,6 +344,11 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
 
   Future<void> _scanBarcode() async {
     HapticFeedback.lightImpact();
+
+    final user = ref.read(currentUserProvider);
+    if (user == null) return;
+    if (!await _checkScanLimit()) return;
+
     final barcode = await Navigator.of(context).push<String>(
       MaterialPageRoute(builder: (_) => const BarcodeScreen()),
     );
@@ -340,6 +370,7 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
       }
 
       if (mounted) {
+        await _scanLimitService.incrementCount(user.uid);
         setState(() {
           _result = result;
           _nameController.text = result.mealName;
@@ -497,8 +528,8 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
             return Stack(
               children: [
                 Container(
-                  decoration: const BoxDecoration(
-                    color: AppColors.background,
+                  decoration: BoxDecoration(
+                    color: C.of(context).bg,
                     borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
                   ),
                   child: SingleChildScrollView(
@@ -513,7 +544,7 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
                     width: 40,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: AppColors.white30,
+                      color: C.of(context).text30,
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -544,11 +575,11 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
                               .headlineSmall
                               ?.copyWith(fontWeight: FontWeight.w700),
                         ),
-                        const Text(
+                        Text(
                           'Review and edit before logging',
                           style: TextStyle(
                             fontSize: 13,
-                            color: AppColors.white30,
+                            color: C.of(context).text30,
                           ),
                         ),
                       ],
@@ -561,9 +592,9 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: AppColors.cardSurface,
+                    color: C.of(context).card,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AppColors.glassBorder),
+                    border: Border.all(color: C.of(context).glassBorder),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -634,12 +665,12 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
 
                 if (_result?.itemsDetected.isNotEmpty == true) ...[
                   const SizedBox(height: 16),
-                  const Text(
+                  Text(
                     'Items Detected',
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.white54,
+                      color: C.of(context).text54,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -651,15 +682,15 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 12, vertical: 6),
                               decoration: BoxDecoration(
-                                color: AppColors.secondary,
+                                color: C.of(context).secondary,
                                 borderRadius: BorderRadius.circular(20),
                                 border:
-                                    Border.all(color: AppColors.glassBorder),
+                                    Border.all(color: C.of(context).glassBorder),
                               ),
                               child: Text(
                                 item,
-                                style: const TextStyle(
-                                    color: AppColors.white70, fontSize: 12),
+                                style: TextStyle(
+                                    color: C.of(context).text70, fontSize: 12),
                               ),
                             ))
                         .toList(),
@@ -678,12 +709,12 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
                             _saveMealWithState(setSheetState);
                           },
                     child: _isSaving
-                        ? const SizedBox(
+                        ? SizedBox(
                             width: 24,
                             height: 24,
                             child: CircularProgressIndicator(
                               strokeWidth: 2.5,
-                              color: AppColors.background,
+                              color: C.of(context).bg,
                             ),
                           )
                         : const Row(
@@ -708,7 +739,7 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
               borderRadius:
                   const BorderRadius.vertical(top: Radius.circular(24)),
             ),
-            child: const Center(
+            child: Center(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -720,7 +751,7 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
                   Text(
                     'Logging your meal...',
                     style: TextStyle(
-                      color: AppColors.white,
+                      color: C.of(context).text,
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
                     ),
@@ -742,10 +773,10 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
       padding: const EdgeInsets.only(bottom: 8),
       child: Text(
         label,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 13,
           fontWeight: FontWeight.w600,
-          color: AppColors.white54,
+          color: C.of(context).text54,
         ),
       ),
     );
@@ -765,14 +796,14 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
         const SizedBox(height: 2),
         Text(
           label,
-          style: const TextStyle(fontSize: 10, color: AppColors.white30),
+          style: TextStyle(fontSize: 10, color: C.of(context).text30),
         ),
       ],
     );
   }
 
   Widget _quickStatDivider() {
-    return Container(width: 1, height: 30, color: AppColors.glassBorder);
+    return Container(width: 1, height: 30, color: C.of(context).glassBorder);
   }
 
   Widget _editableField(
@@ -786,10 +817,10 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
       child: TextFormField(
         controller: controller,
         keyboardType: keyboardType,
-        style: const TextStyle(color: AppColors.white),
+        style: TextStyle(color: C.of(context).text),
         decoration: InputDecoration(
           labelText: label,
-          prefixIcon: Icon(icon, color: AppColors.white54, size: 20),
+          prefixIcon: Icon(icon, color: C.of(context).text54, size: 20),
         ),
       ),
     );
@@ -798,7 +829,7 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: C.of(context).bg,
       body: SafeArea(
         child: Column(
           children: [
@@ -846,10 +877,10 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
                                     ),
                                   ),
                                   const SizedBox(height: 20),
-                                  const Text(
+                                  Text(
                                     'Analyzing your meal...',
                                     style: TextStyle(
-                                      color: AppColors.white,
+                                      color: C.of(context).text,
                                       fontSize: 17,
                                       fontWeight: FontWeight.w600,
                                     ),
@@ -863,10 +894,10 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
                                             .withValues(alpha: 0.3),
                                       ),
                                   const SizedBox(height: 6),
-                                  const Text(
+                                  Text(
                                     'Identifying food items and nutrients',
                                     style: TextStyle(
-                                      color: AppColors.white30,
+                                      color: C.of(context).text30,
                                       fontSize: 13,
                                     ),
                                   ),
@@ -894,8 +925,8 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
                                       Colors.black.withValues(alpha: 0.5),
                                   shape: BoxShape.circle,
                                 ),
-                                child: const Icon(Icons.close,
-                                    color: AppColors.white, size: 20),
+                                child: Icon(Icons.close,
+                                    color: C.of(context).text, size: 20),
                               ),
                             ),
                           ),
@@ -904,9 +935,9 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
                   : Container(
                       margin: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        color: AppColors.cardSurface,
+                        color: C.of(context).card,
                         borderRadius: BorderRadius.circular(24),
-                        border: Border.all(color: AppColors.glassBorder),
+                        border: Border.all(color: C.of(context).glassBorder),
                       ),
                       child: Center(
                         child: Column(
@@ -934,19 +965,19 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
                                   duration: 1500.ms,
                                 ),
                             const SizedBox(height: 24),
-                            const Text(
+                            Text(
                               'Snap your meal',
                               style: TextStyle(
                                 fontSize: 22,
                                 fontWeight: FontWeight.w700,
-                                color: AppColors.white,
+                                color: C.of(context).text,
                               ),
                             ),
                             const SizedBox(height: 8),
-                            const Text(
+                            Text(
                               'AI will analyze the nutrition instantly',
                               style: TextStyle(
-                                color: AppColors.white30,
+                                color: C.of(context).text30,
                                 fontSize: 14,
                               ),
                             ),
@@ -975,8 +1006,8 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
                     Expanded(
                       child: Text(
                         _error!,
-                        style: const TextStyle(
-                            color: AppColors.white70, fontSize: 13),
+                        style: TextStyle(
+                            color: C.of(context).text70, fontSize: 13),
                       ),
                     ),
                     GestureDetector(
@@ -1033,8 +1064,8 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
                         icon: const Icon(Icons.edit_note, size: 20),
                         label: const Text('Manual'),
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: AppColors.white70,
-                          side: BorderSide(color: AppColors.glassBorder),
+                          foregroundColor: C.of(context).text70,
+                          side: BorderSide(color: C.of(context).glassBorder),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
                           ),
@@ -1062,8 +1093,8 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
                         icon: const Icon(Icons.photo_library_outlined),
                         label: const Text('Gallery'),
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: AppColors.white70,
-                          side: BorderSide(color: AppColors.glassBorder),
+                          foregroundColor: C.of(context).text70,
+                          side: BorderSide(color: C.of(context).glassBorder),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
                           ),

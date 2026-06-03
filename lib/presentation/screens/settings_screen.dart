@@ -3,9 +3,14 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/theme_colors.dart';
+import '../../core/utils/app_logger.dart';
+import '../../data/services/export_service.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/profile_provider.dart';
+import '../../providers/theme_provider.dart';
 import '../widgets/shimmer_loader.dart';
+import 'profile_edit_screen.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -75,8 +80,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
         padding: const EdgeInsets.all(24),
-        decoration: const BoxDecoration(
-          color: AppColors.background,
+        decoration: BoxDecoration(
+          color: C.of(context).bg,
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: Column(
@@ -87,7 +92,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: AppColors.white30,
+                  color: C.of(context).text30,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -112,14 +117,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w700,
-                color: isDestructive ? AppColors.error : AppColors.white,
+                color: isDestructive ? AppColors.error : C.of(context).text,
               ),
             ),
             const SizedBox(height: 8),
             Text(
               message,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: AppColors.white54, fontSize: 14),
+              style: TextStyle(color: C.of(context).text54, fontSize: 14),
             ),
             const SizedBox(height: 24),
             Row(
@@ -130,8 +135,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     child: OutlinedButton(
                       onPressed: () => Navigator.pop(context, false),
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.white70,
-                        side: BorderSide(color: AppColors.glassBorder),
+                        foregroundColor: C.of(context).text70,
+                        side: BorderSide(color: C.of(context).glassBorder),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
                         ),
@@ -169,6 +174,222 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
+  void _exportData() {
+    String selectedRange = '7'; // default 7 days
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            return Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: C.of(context).bg,
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: C.of(context).text30,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    'Export Meal History',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                      color: C.of(context).text,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Choose a date range to export as CSV',
+                    style:
+                        TextStyle(fontSize: 13, color: C.of(context).text30),
+                  ),
+                  const SizedBox(height: 20),
+                  // Range options
+                  ...['7', '14', '30', '90'].map((days) {
+                    final isSelected = selectedRange == days;
+                    final label = days == '7'
+                        ? 'Last 7 days'
+                        : days == '14'
+                            ? 'Last 2 weeks'
+                            : days == '30'
+                                ? 'Last 30 days'
+                                : 'Last 3 months';
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: GestureDetector(
+                        onTap: () =>
+                            setSheetState(() => selectedRange = days),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 14),
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? AppColors.accentGreen
+                                    .withValues(alpha: 0.12)
+                                : C.of(context).card,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: isSelected
+                                  ? AppColors.accentGreen
+                                  : C.of(context).glassBorder,
+                              width: isSelected ? 2 : 1,
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.calendar_today,
+                                size: 18,
+                                color: isSelected
+                                    ? AppColors.accentGreen
+                                    : C.of(context).text54,
+                              ),
+                              const SizedBox(width: 12),
+                              Text(
+                                label,
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: isSelected
+                                      ? FontWeight.w700
+                                      : FontWeight.w500,
+                                  color: isSelected
+                                      ? AppColors.accentGreen
+                                      : C.of(context).text70,
+                                ),
+                              ),
+                              const Spacer(),
+                              if (isSelected)
+                                const Icon(Icons.check_circle,
+                                    color: AppColors.accentGreen, size: 20),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 52,
+                    child: ElevatedButton.icon(
+                      onPressed: () async {
+                        Navigator.pop(context);
+                        await _performExport(int.parse(selectedRange));
+                      },
+                      icon: const Icon(Icons.share, size: 18),
+                      label: const Text('Export & Share'),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _performExport(int days) async {
+    final user = ref.read(currentUserProvider);
+    final profile = ref.read(userProfileProvider).valueOrNull;
+    if (user == null || profile == null) return;
+
+    // Show loading
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => Center(
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: C.of(context).card,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const CircularProgressIndicator(
+                  color: AppColors.accentGreen),
+              const SizedBox(height: 16),
+              Text(
+                'Preparing export...',
+                style: TextStyle(
+                  color: C.of(context).text,
+                  fontSize: 14,
+                  decoration: TextDecoration.none,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    try {
+      final endDate = DateTime.now();
+      final startDate = endDate.subtract(Duration(days: days));
+
+      final meals = await ref
+          .read(firestoreServiceProvider)
+          .getMealsForRange(user.uid, startDate, endDate);
+
+      if (!mounted) return;
+      Navigator.pop(context); // close loading
+
+      if (meals.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('No meals found in this period'),
+            backgroundColor: AppColors.warning,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12)),
+          ),
+        );
+        return;
+      }
+
+      log.i('[Export] Exporting ${meals.length} meals for last $days days');
+      await ExportService().exportAsCSV(
+        meals: meals,
+        profile: profile,
+        startDate: startDate,
+        endDate: endDate,
+      );
+    } catch (e) {
+      log.e('[Export] Failed: $e');
+      if (!mounted) return;
+      Navigator.pop(context); // close loading if still open
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Export failed: $e'),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12)),
+        ),
+      );
+    }
+  }
+
   void _editGoals() {
     final profile = ref.read(userProfileProvider).valueOrNull;
     if (profile == null) return;
@@ -191,8 +412,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
         child: Container(
           padding: const EdgeInsets.all(24),
-          decoration: const BoxDecoration(
-            color: AppColors.background,
+          decoration: BoxDecoration(
+            color: C.of(context).bg,
             borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
           ),
           child: Column(
@@ -204,24 +425,24 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: AppColors.white30,
+                    color: C.of(context).text30,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
               ),
               const SizedBox(height: 20),
-              const Text(
+              Text(
                 'Edit Daily Targets',
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.white,
+                  color: C.of(context).text,
                 ),
               ),
               const SizedBox(height: 4),
-              const Text(
+              Text(
                 'Customize your nutrition goals',
-                style: TextStyle(fontSize: 13, color: AppColors.white30),
+                style: TextStyle(fontSize: 13, color: C.of(context).text30),
               ),
               const SizedBox(height: 20),
               _dialogField('Daily Calories', calorieController,
@@ -276,10 +497,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     return TextField(
       controller: controller,
       keyboardType: TextInputType.number,
-      style: const TextStyle(color: AppColors.white),
+      style: TextStyle(color: C.of(context).text),
       decoration: InputDecoration(
         labelText: label,
-        prefixIcon: Icon(icon, color: AppColors.white54, size: 20),
+        prefixIcon: Icon(icon, color: C.of(context).text54, size: 20),
       ),
     );
   }
@@ -311,9 +532,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               return Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: AppColors.cardSurface,
+                  color: C.of(context).card,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: AppColors.glassBorder),
+                  border: Border.all(color: C.of(context).glassBorder),
                 ),
                 child: Column(
                   children: [
@@ -350,7 +571,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     Text(
                       '${profile.age}y  •  ${profile.weight}kg  •  ${profile.height}cm',
                       style:
-                          const TextStyle(color: AppColors.white30, fontSize: 13),
+                          TextStyle(color: C.of(context).text30, fontSize: 13),
                     ),
                     const SizedBox(height: 10),
                     Container(
@@ -377,7 +598,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     Container(
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: AppColors.background,
+                        color: C.of(context).bg,
                         borderRadius: BorderRadius.circular(14),
                       ),
                       child: Row(
@@ -413,12 +634,52 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
           // Settings items
           _settingsTile(
+            icon: Icons.person_outline,
+            title: 'Edit Profile',
+            subtitle: 'Update weight, height, activity, and goal',
+            onTap: () {
+              final profile = ref.read(userProfileProvider).valueOrNull;
+              if (profile == null) return;
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => ProfileEditScreen(profile: profile),
+                ),
+              );
+            },
+            delay: 200,
+          ),
+          _settingsTile(
             icon: Icons.track_changes,
             title: 'Edit Goals',
             subtitle: 'Adjust your daily targets',
             onTap: _editGoals,
-            delay: 200,
+            delay: 250,
           ),
+          _settingsTile(
+            icon: Icons.file_download_outlined,
+            title: 'Export Data',
+            subtitle: 'Share meal history as CSV',
+            onTap: _exportData,
+            delay: 275,
+          ),
+          Builder(builder: (context) {
+            final themeMode = ref.watch(themeModeProvider);
+            final isDark = themeMode == ThemeMode.dark;
+            return _settingsTile(
+              icon: isDark ? Icons.dark_mode : Icons.light_mode,
+              title: 'Appearance',
+              subtitle: isDark ? 'Dark mode' : 'Light mode',
+              trailing: Switch(
+                value: !isDark,
+                onChanged: (_) {
+                  HapticFeedback.lightImpact();
+                  ref.read(themeModeProvider.notifier).toggle();
+                },
+                activeColor: AppColors.accentGreen,
+              ),
+              delay: 250,
+            );
+          }),
           _settingsTile(
             icon: Icons.notifications_outlined,
             title: 'Reminders',
@@ -462,7 +723,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               'Caliora v1.0.0',
               style: TextStyle(
                 fontSize: 12,
-                color: AppColors.white30,
+                color: C.of(context).text30,
               ),
             ),
           ),
@@ -485,14 +746,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         const SizedBox(height: 2),
         Text(
           label,
-          style: const TextStyle(fontSize: 10, color: AppColors.white30),
+          style: TextStyle(fontSize: 10, color: C.of(context).text30),
         ),
       ],
     );
   }
 
   Widget _targetDivider() {
-    return Container(width: 1, height: 28, color: AppColors.glassBorder);
+    return Container(width: 1, height: 28, color: C.of(context).glassBorder);
   }
 
   Widget _settingsTile({
@@ -502,7 +763,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     VoidCallback? onTap,
     Widget? trailing,
     Color iconColor = AppColors.accentGreen,
-    Color titleColor = AppColors.white,
+    Color? titleColor,
     int delay = 0,
   }) {
     return Container(
@@ -523,22 +784,22 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         title: Text(
           title,
           style: TextStyle(
-            color: titleColor,
+            color: titleColor ?? C.of(context).text,
             fontWeight: FontWeight.w600,
           ),
         ),
         subtitle: Text(
           subtitle,
-          style: const TextStyle(color: AppColors.white30, fontSize: 12),
+          style: TextStyle(color: C.of(context).text30, fontSize: 12),
         ),
         trailing: trailing ??
-            const Icon(Icons.chevron_right, color: AppColors.white30),
+            Icon(Icons.chevron_right, color: C.of(context).text30),
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
-        tileColor: AppColors.cardSurface,
+        tileColor: C.of(context).card,
       ),
     )
         .animate()
