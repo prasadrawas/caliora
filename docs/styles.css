@@ -1,4 +1,5 @@
 /* ===== IMPORTS ===== */
+/* font-display: swap is applied via &display=swap in the Google Fonts URL below */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@600;700;800&display=swap');
 
 /* ===== CSS VARIABLES ===== */
@@ -1079,6 +1080,47 @@ ul, ol {
 
 .legal-page strong {
   color: var(--text);
+}
+
+/* ===== BREADCRUMB ===== */
+.breadcrumb {
+  margin-bottom: 24px;
+}
+
+.breadcrumb ol {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.breadcrumb li {
+  display: flex;
+  align-items: center;
+  font-size: 0.875rem;
+  color: var(--text-54);
+}
+
+.breadcrumb li + li::before {
+  content: '›';
+  margin-right: 8px;
+  color: var(--text-30);
+}
+
+.breadcrumb a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.breadcrumb a:hover {
+  opacity: 0.8;
+}
+
+.breadcrumb li[aria-current="page"] {
+  color: var(--text-70);
 }
 
 /* ===== RESPONSIVE ===== */

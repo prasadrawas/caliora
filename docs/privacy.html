@@ -3,39 +3,99 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Privacy Policy for Caliora — Your AI Nutrition Companion.">
+  <meta name="description" content="Privacy Policy for Caliora — learn how we collect, use, and protect your personal data in our AI nutrition tracking app.">
+  <meta name="robots" content="index, follow">
+  <meta name="theme-color" content="#0D0D0D">
+  <meta name="apple-mobile-web-app-title" content="Caliora">
+  <meta name="application-name" content="Caliora">
+
+  <!-- Canonical URL -->
+  <link rel="canonical" href="https://prasadrawas.github.io/caliora/privacy.html">
+
+  <!-- Open Graph -->
   <meta property="og:title" content="Privacy Policy — Caliora">
   <meta property="og:description" content="Learn how Caliora collects, uses, and protects your data.">
   <meta property="og:type" content="website">
+  <meta property="og:url" content="https://prasadrawas.github.io/caliora/privacy.html">
+  <meta property="og:image" content="https://prasadrawas.github.io/caliora/og-image.png">
+  <meta property="og:site_name" content="Caliora">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Privacy Policy — Caliora">
+  <meta name="twitter:description" content="Learn how Caliora collects, uses, and protects your data.">
+
   <title>Privacy Policy — Caliora</title>
   <link rel="icon" type="image/png" href="favicon.png">
   <link rel="stylesheet" href="styles.css">
+
+  <!-- Structured Data: WebPage -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "name": "Privacy Policy — Caliora",
+    "description": "Privacy Policy for Caliora — learn how we collect, use, and protect your personal data in our AI nutrition tracking app.",
+    "url": "https://prasadrawas.github.io/caliora/privacy.html",
+    "isPartOf": {
+      "@type": "WebSite",
+      "name": "Caliora",
+      "url": "https://prasadrawas.github.io/caliora/"
+    },
+    "breadcrumb": {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "https://prasadrawas.github.io/caliora/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Privacy Policy",
+          "item": "https://prasadrawas.github.io/caliora/privacy.html"
+        }
+      ]
+    }
+  }
+  </script>
 </head>
 <body>
 
   <!-- ===== NAVBAR ===== -->
-  <nav class="navbar">
+  <nav class="navbar" role="navigation" aria-label="Main navigation">
     <div class="nav-inner">
-      <a href="index.html" class="nav-logo">
-        <span class="logo-dot"></span>Caliora
+      <a href="index.html" class="nav-logo" aria-label="Caliora home">
+        <span class="logo-dot" aria-hidden="true"></span>Caliora
       </a>
       <div class="nav-links" id="navLinks">
         <a href="index.html#features">Features</a>
         <a href="index.html#how-it-works">How It Works</a>
         <a href="index.html#download" class="nav-cta">Download</a>
       </div>
-      <button class="menu-toggle" id="menuToggle" aria-label="Toggle navigation menu">
-        <span></span>
-        <span></span>
-        <span></span>
+      <button class="menu-toggle" id="menuToggle" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="navLinks">
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
       </button>
     </div>
   </nav>
 
   <!-- ===== CONTENT ===== -->
-  <main class="legal-page">
+  <main class="legal-page" aria-labelledby="page-heading">
     <div class="container">
-      <h1><span class="gradient-text">Privacy Policy</span></h1>
+
+      <!-- Breadcrumb -->
+      <nav class="breadcrumb" aria-label="Breadcrumb">
+        <ol>
+          <li><a href="index.html">Home</a></li>
+          <li aria-current="page">Privacy Policy</li>
+        </ol>
+      </nav>
+
+      <h1 id="page-heading"><span class="gradient-text">Privacy Policy</span></h1>
       <p class="legal-updated">Last updated: June 1, 2026</p>
 
       <p>Caliora ("we," "our," or "the app") is committed to protecting your privacy. This Privacy Policy explains what information we collect, how we use it, and your rights regarding your data when you use the Caliora mobile application.</p>
@@ -63,9 +123,9 @@
       <h2>3. Third-Party Services</h2>
       <p>Caliora uses the following third-party services to deliver its features:</p>
       <ul>
-        <li><strong>Google Gemini AI:</strong> Meal photos are sent to Google's Gemini AI model for food identification and nutrition analysis. Google's <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">privacy policy</a> applies to this processing.</li>
+        <li><strong>Google Gemini AI:</strong> Meal photos are sent to Google's Gemini AI model for food identification and nutrition analysis. Google's <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">privacy policy</a> applies to this processing.</li>
         <li><strong>Firebase (Google):</strong> We use Firebase Authentication for sign-in and Firebase Firestore for storing your account data, nutrition logs, and settings. Data is stored on Google Cloud servers.</li>
-        <li><strong>Cloudinary:</strong> Meal photos are stored on Cloudinary's cloud storage service. Cloudinary's <a href="https://cloudinary.com/privacy" target="_blank" rel="noopener">privacy policy</a> applies.</li>
+        <li><strong>Cloudinary:</strong> Meal photos are stored on Cloudinary's cloud storage service. Cloudinary's <a href="https://cloudinary.com/privacy" target="_blank" rel="noopener noreferrer">privacy policy</a> applies.</li>
         <li><strong>Open Food Facts:</strong> Barcode scanning queries the Open Food Facts open database to retrieve packaged food nutrition data. No personal data is sent to this service.</li>
       </ul>
 
@@ -103,35 +163,35 @@
 
       <h2>10. Contact Us</h2>
       <p>If you have questions or concerns about this Privacy Policy, please contact us at:</p>
-      <p><a href="mailto:contact@caliora.app">contact@caliora.app</a></p>
+      <p><a href="mailto:contact@caliora.app" aria-label="Send email to Caliora support">contact@caliora.app</a></p>
     </div>
   </main>
 
   <!-- ===== FOOTER ===== -->
-  <footer class="footer">
+  <footer class="footer" role="contentinfo">
     <div class="container">
       <div class="footer-inner">
         <div class="footer-brand">
-          <div class="nav-logo">
-            <span class="logo-dot"></span>Caliora
+          <div class="nav-logo" aria-label="Caliora">
+            <span class="logo-dot" aria-hidden="true"></span>Caliora
           </div>
           <p>AI-powered nutrition tracking that makes healthy eating simple.</p>
         </div>
-        <div class="footer-links-group">
+        <nav class="footer-links-group" aria-label="Legal pages">
           <h4>Legal</h4>
           <a href="privacy.html">Privacy Policy</a>
           <a href="terms.html">Terms of Service</a>
           <a href="disclaimer.html">Disclaimer</a>
-        </div>
-        <div class="footer-links-group">
+        </nav>
+        <nav class="footer-links-group" aria-label="App sections">
           <h4>App</h4>
           <a href="index.html#features">Features</a>
           <a href="index.html#how-it-works">How It Works</a>
           <a href="index.html#download">Download</a>
-        </div>
+        </nav>
         <div class="footer-links-group">
           <h4>Contact</h4>
-          <a href="mailto:contact@caliora.app">contact@caliora.app</a>
+          <a href="mailto:contact@caliora.app" aria-label="Send email to Caliora support">contact@caliora.app</a>
         </div>
       </div>
       <div class="footer-bottom">
@@ -145,13 +205,15 @@
     const menuToggle = document.getElementById('menuToggle');
     const navLinks = document.getElementById('navLinks');
     menuToggle.addEventListener('click', () => {
+      const isOpen = navLinks.classList.toggle('open');
       menuToggle.classList.toggle('active');
-      navLinks.classList.toggle('open');
+      menuToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
     });
     navLinks.querySelectorAll('a').forEach(link => {
       link.addEventListener('click', () => {
         menuToggle.classList.remove('active');
         navLinks.classList.remove('open');
+        menuToggle.setAttribute('aria-expanded', 'false');
       });
     });
   </script>

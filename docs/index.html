@@ -6,30 +6,85 @@
   <meta name="description" content="Caliora — Your AI Nutrition Companion. Snap a photo of any meal and instantly get detailed nutrition analysis with 16 nutrients tracked.">
   <meta name="keywords" content="calorie tracker, AI nutrition, food analysis, macro tracking, meal logger, health app">
   <meta name="author" content="Prasad Rawas">
+  <meta name="robots" content="index, follow">
+  <meta name="theme-color" content="#0D0D0D">
+  <meta name="apple-mobile-web-app-title" content="Caliora">
+  <meta name="application-name" content="Caliora">
+
+  <!-- Canonical URL -->
+  <link rel="canonical" href="https://prasadrawas.github.io/caliora/">
 
   <!-- Open Graph -->
   <meta property="og:title" content="Caliora — Your AI Nutrition Companion">
   <meta property="og:description" content="Snap a photo of any meal and instantly get detailed nutrition analysis with 16 nutrients tracked.">
   <meta property="og:type" content="website">
-  <meta property="og:url" content="https://caliora.app">
-  <meta property="og:image" content="https://caliora.app/og-image.png">
+  <meta property="og:url" content="https://prasadrawas.github.io/caliora/">
+  <meta property="og:image" content="https://prasadrawas.github.io/caliora/og-image.png">
+  <meta property="og:site_name" content="Caliora">
 
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Caliora — Your AI Nutrition Companion">
   <meta name="twitter:description" content="AI-powered calorie and macro tracking from food photos.">
+  <meta name="twitter:image" content="https://prasadrawas.github.io/caliora/og-image.png">
 
   <title>Caliora — Your AI Nutrition Companion</title>
   <link rel="icon" type="image/png" href="favicon.png">
   <link rel="stylesheet" href="styles.css">
+
+  <!-- Structured Data: SoftwareApplication -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "Caliora",
+    "applicationCategory": "HealthApplication",
+    "operatingSystem": "Android",
+    "description": "AI-powered calorie and macro tracking app that analyzes food from photos",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    },
+    "author": {
+      "@type": "Person",
+      "name": "Prasad Rawas"
+    }
+  }
+  </script>
+
+  <!-- Structured Data: Organization + WebSite -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "name": "Caliora",
+        "url": "https://prasadrawas.github.io/caliora/",
+        "logo": "https://prasadrawas.github.io/caliora/favicon.png",
+        "contactPoint": {
+          "@type": "ContactPoint",
+          "email": "contact@caliora.app",
+          "contactType": "customer support"
+        }
+      },
+      {
+        "@type": "WebSite",
+        "name": "Caliora",
+        "url": "https://prasadrawas.github.io/caliora/"
+      }
+    ]
+  }
+  </script>
 </head>
 <body>
 
   <!-- ===== NAVBAR ===== -->
-  <nav class="navbar">
+  <nav class="navbar" role="navigation" aria-label="Main navigation">
     <div class="nav-inner">
-      <a href="index.html" class="nav-logo">
-        <span class="logo-dot"></span>Caliora
+      <a href="index.html" class="nav-logo" aria-label="Caliora home">
+        <span class="logo-dot" aria-hidden="true"></span>Caliora
       </a>
       <div class="nav-links" id="navLinks">
         <a href="#features">Features</a>
@@ -37,34 +92,34 @@
         <a href="#dashboard">Dashboard</a>
         <a href="#download" class="nav-cta">Download</a>
       </div>
-      <button class="menu-toggle" id="menuToggle" aria-label="Toggle navigation menu">
-        <span></span>
-        <span></span>
-        <span></span>
+      <button class="menu-toggle" id="menuToggle" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="navLinks">
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
       </button>
     </div>
   </nav>
 
   <!-- ===== HERO ===== -->
-  <section class="hero">
+  <section class="hero" aria-labelledby="hero-heading">
     <div class="container hero-inner">
       <div class="hero-content">
-        <div class="hero-badge">AI-Powered Nutrition Tracking</div>
-        <h1><span class="gradient-text">Caliora</span></h1>
+        <div class="hero-badge" role="text">AI-Powered Nutrition Tracking</div>
+        <h1 id="hero-heading"><span class="gradient-text">Caliora</span></h1>
         <p class="hero-tagline">Your AI Nutrition Companion</p>
         <p class="hero-description">
           Snap a photo of any meal and let AI instantly analyze it. Track 16 nutrients including macros, minerals, and vitamins — all without manual entry.
         </p>
         <div class="hero-buttons">
-          <a href="#download" class="btn-primary">
+          <a href="#download" class="btn-primary" aria-label="Download Caliora on Google Play">
             &#9654; Download on Google Play
           </a>
-          <a href="#features" class="btn-secondary">
+          <a href="#features" class="btn-secondary" aria-label="Learn more about Caliora features">
             Learn More &#8595;
           </a>
         </div>
       </div>
-      <div class="hero-mockup">
+      <div class="hero-mockup" aria-hidden="true">
         <div class="phone-frame">
           <div class="phone-screen">
             <div class="mock-ring"></div>
@@ -103,38 +158,38 @@
   </section>
 
   <!-- ===== FEATURES ===== -->
-  <section class="features" id="features">
+  <section class="features" id="features" aria-labelledby="features-heading">
     <div class="container">
-      <h2 class="section-title"><span class="gradient-text">Powerful Features</span></h2>
+      <h2 id="features-heading" class="section-title"><span class="gradient-text">Powerful Features</span></h2>
       <p class="section-subtitle">Everything you need to understand and improve your nutrition, powered by cutting-edge AI.</p>
       <div class="features-grid">
         <div class="feature-card fade-in">
-          <span class="feature-icon">&#128248;</span>
+          <span class="feature-icon" aria-hidden="true">&#128248;</span>
           <h3>AI Food Analysis</h3>
           <p>Snap a photo of any meal and get a detailed breakdown of 16 nutrients instantly. Our AI identifies every food item and estimates portions using advanced image recognition.</p>
         </div>
         <div class="feature-card fade-in">
-          <span class="feature-icon">&#128179;</span>
+          <span class="feature-icon" aria-hidden="true">&#128179;</span>
           <h3>Barcode Scanner</h3>
           <p>Scan the barcode on any packaged food to pull exact nutrition data from the Open Food Facts database. Fast, accurate, and effortless logging.</p>
         </div>
         <div class="feature-card fade-in">
-          <span class="feature-icon">&#11088;</span>
+          <span class="feature-icon" aria-hidden="true">&#11088;</span>
           <h3>Smart Meal Score</h3>
           <p>Every meal gets a health score with personalized improvement suggestions. Understand what makes a meal balanced and how to make better choices.</p>
         </div>
         <div class="feature-card fade-in">
-          <span class="feature-icon">&#128202;</span>
+          <span class="feature-icon" aria-hidden="true">&#128202;</span>
           <h3>16 Nutrient Tracking</h3>
           <p>Go beyond calories. Track protein, carbs, fat, fiber, sugar, saturated fat, sodium, potassium, calcium, iron, magnesium, and five essential vitamins.</p>
         </div>
         <div class="feature-card fade-in">
-          <span class="feature-icon">&#128200;</span>
+          <span class="feature-icon" aria-hidden="true">&#128200;</span>
           <h3>Progress Analytics</h3>
           <p>Visualize your nutrition journey with weekly and monthly reports. Spot trends, celebrate streaks, and get AI-powered insights to stay on track.</p>
         </div>
         <div class="feature-card fade-in">
-          <span class="feature-icon">&#127763;</span>
+          <span class="feature-icon" aria-hidden="true">&#127763;</span>
           <h3>Dark &amp; Light Theme</h3>
           <p>A beautifully crafted interface that adapts to your preference. Whether you track at dawn or midnight, Caliora looks stunning in both themes.</p>
         </div>
@@ -143,25 +198,25 @@
   </section>
 
   <!-- ===== HOW IT WORKS ===== -->
-  <section class="how-it-works" id="how-it-works">
+  <section class="how-it-works" id="how-it-works" aria-labelledby="how-it-works-heading">
     <div class="container">
-      <h2 class="section-title"><span class="gradient-text">How It Works</span></h2>
+      <h2 id="how-it-works-heading" class="section-title"><span class="gradient-text">How It Works</span></h2>
       <p class="section-subtitle">Three simple steps to effortless nutrition tracking.</p>
-      <div class="steps">
-        <div class="step fade-in">
-          <div class="step-number">1</div>
-          <div class="step-connector"></div>
+      <div class="steps" role="list">
+        <div class="step fade-in" role="listitem">
+          <div class="step-number" aria-hidden="true">1</div>
+          <div class="step-connector" aria-hidden="true"></div>
           <h3>Snap</h3>
           <p>Take a photo of your meal or scan a barcode. That's all the input you need.</p>
         </div>
-        <div class="step fade-in">
-          <div class="step-number">2</div>
-          <div class="step-connector"></div>
+        <div class="step fade-in" role="listitem">
+          <div class="step-number" aria-hidden="true">2</div>
+          <div class="step-connector" aria-hidden="true"></div>
           <h3>Review</h3>
           <p>AI identifies every food item, estimates portions, and calculates 16 nutrients per item.</p>
         </div>
-        <div class="step fade-in">
-          <div class="step-number">3</div>
+        <div class="step fade-in" role="listitem">
+          <div class="step-number" aria-hidden="true">3</div>
           <h3>Log</h3>
           <p>Confirm and save. Your daily totals, macro targets, and progress update automatically.</p>
         </div>
@@ -170,35 +225,35 @@
   </section>
 
   <!-- ===== DASHBOARD PREVIEW ===== -->
-  <section class="dashboard-preview" id="dashboard">
+  <section class="dashboard-preview" id="dashboard" aria-labelledby="dashboard-heading">
     <div class="container dashboard-inner">
       <div class="dashboard-content fade-in">
-        <h2>Your Nutrition at a <span class="gradient-text">Glance</span></h2>
+        <h2 id="dashboard-heading">Your Nutrition at a <span class="gradient-text">Glance</span></h2>
         <p>The Caliora home screen gives you a comprehensive view of your daily nutrition. See exactly where you stand with beautiful, intuitive visualizations.</p>
         <div class="dashboard-features">
           <div class="dashboard-feature">
-            <div class="dashboard-feature-icon">&#127919;</div>
+            <div class="dashboard-feature-icon" aria-hidden="true">&#127919;</div>
             <div>
               <h4>Calorie Ring</h4>
               <p>A dynamic ring shows calories consumed vs. your daily target at a glance.</p>
             </div>
           </div>
           <div class="dashboard-feature">
-            <div class="dashboard-feature-icon">&#9878;</div>
+            <div class="dashboard-feature-icon" aria-hidden="true">&#9878;</div>
             <div>
               <h4>Macro Targets</h4>
               <p>Color-coded progress bars for protein, carbs, and fat keep you balanced.</p>
             </div>
           </div>
           <div class="dashboard-feature">
-            <div class="dashboard-feature-icon">&#128138;</div>
+            <div class="dashboard-feature-icon" aria-hidden="true">&#128138;</div>
             <div>
               <h4>Minerals &amp; Vitamins</h4>
               <p>Track calcium, iron, magnesium, potassium, and five essential vitamins daily.</p>
             </div>
           </div>
           <div class="dashboard-feature">
-            <div class="dashboard-feature-icon">&#128293;</div>
+            <div class="dashboard-feature-icon" aria-hidden="true">&#128293;</div>
             <div>
               <h4>Meal Breakdown</h4>
               <p>See nutrition totals for breakfast, lunch, dinner, and snacks individually.</p>
@@ -206,7 +261,7 @@
           </div>
         </div>
       </div>
-      <div class="dashboard-mockup fade-in">
+      <div class="dashboard-mockup fade-in" aria-hidden="true">
         <div class="dashboard-card">
           <div class="dash-header">
             <h4>Today's Summary</h4>
@@ -272,13 +327,13 @@
   </section>
 
   <!-- ===== CTA / DOWNLOAD ===== -->
-  <section class="cta" id="download">
+  <section class="cta" id="download" aria-labelledby="download-heading">
     <div class="container cta-inner">
-      <h2><span class="gradient-text">Start Tracking Smarter</span></h2>
+      <h2 id="download-heading"><span class="gradient-text">Start Tracking Smarter</span></h2>
       <p>Download Caliora and take the guesswork out of nutrition. Free to use, powered by AI.</p>
       <div class="cta-buttons">
-        <a href="#" class="store-badge">
-          <span class="store-badge-icon">&#9654;</span>
+        <a href="#" class="store-badge" aria-label="Download Caliora on Google Play Store">
+          <span class="store-badge-icon" aria-hidden="true">&#9654;</span>
           <div class="store-badge-text">
             <small>Get it on</small>
             <span>Google Play</span>
@@ -289,30 +344,30 @@
   </section>
 
   <!-- ===== FOOTER ===== -->
-  <footer class="footer">
+  <footer class="footer" role="contentinfo">
     <div class="container">
       <div class="footer-inner">
         <div class="footer-brand">
-          <div class="nav-logo">
-            <span class="logo-dot"></span>Caliora
+          <div class="nav-logo" aria-label="Caliora">
+            <span class="logo-dot" aria-hidden="true"></span>Caliora
           </div>
           <p>AI-powered nutrition tracking that makes healthy eating simple. Snap, review, log — and let intelligence handle the rest.</p>
         </div>
-        <div class="footer-links-group">
+        <nav class="footer-links-group" aria-label="Legal pages">
           <h4>Legal</h4>
           <a href="privacy.html">Privacy Policy</a>
           <a href="terms.html">Terms of Service</a>
           <a href="disclaimer.html">Disclaimer</a>
-        </div>
-        <div class="footer-links-group">
+        </nav>
+        <nav class="footer-links-group" aria-label="App sections">
           <h4>App</h4>
           <a href="#features">Features</a>
           <a href="#how-it-works">How It Works</a>
           <a href="#download">Download</a>
-        </div>
+        </nav>
         <div class="footer-links-group">
           <h4>Contact</h4>
-          <a href="mailto:contact@caliora.app">contact@caliora.app</a>
+          <a href="mailto:contact@caliora.app" aria-label="Send email to Caliora support">contact@caliora.app</a>
         </div>
       </div>
       <div class="footer-bottom">
@@ -329,8 +384,9 @@
     const navLinks = document.getElementById('navLinks');
 
     menuToggle.addEventListener('click', () => {
+      const isOpen = navLinks.classList.toggle('open');
       menuToggle.classList.toggle('active');
-      navLinks.classList.toggle('open');
+      menuToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
     });
 
     // Close menu on link click
@@ -338,6 +394,7 @@
       link.addEventListener('click', () => {
         menuToggle.classList.remove('active');
         navLinks.classList.remove('open');
+        menuToggle.setAttribute('aria-expanded', 'false');
       });
     });
 
