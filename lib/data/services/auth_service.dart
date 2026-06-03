@@ -113,7 +113,46 @@ class AuthService {
       throw Exception('No user signed in');
     }
     log.w('[Auth] Deleting account: ${user.uid}');
-    await user.delete();
-    log.i('[Auth] Account deleted');
+    try {
+      await user.delete();
+      log.i('[Auth] Account deleted');
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'requires-recent-login') {
+        log.w('[Auth] Re-authentication required for deletion');
+        rethrow;
+      }
+      rethrow;
+    }
+  }
+
+  Future<void> reauthenticateWithGoogle() async {
+    log.i('[Auth] Re-authenticating with Google');
+    final googleUser = await _googleSignIn.signIn();
+    if (googleUser == null) throw Exception('Google re-auth cancelled');
+    final googleAuth = await googleUser.authentication;
+    final credential = GoogleAuthProvider.credential(
+      accessToken: googleAuth.accessToken,
+      idToken: googleAuth.idToken,
+    );
+    await _auth.currentUser!.reauthenticateWithCredential(credential);
+    log.i('[Auth] Google re-authentication successful');
+  }
+
+  Future<void> reauthenticateWithEmail(String password) async {
+    log.i('[Auth] Re-authenticating with email');
+    final user = _auth.currentUser!;
+    final credential = EmailAuthProvider.credential(
+      email: user.email!,
+      password: password,
+    );
+    await user.reauthenticateWithCredential(credential);
+    log.i('[Auth] Email re-authentication successful');
+  }
+
+  /// Returns true if the current user signed in with Google.
+  bool get isGoogleUser {
+    final user = _auth.currentUser;
+    if (user == null) return false;
+    return user.providerData.any((p) => p.providerId == 'google.com');
   }
 }

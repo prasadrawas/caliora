@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -51,9 +52,22 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     try {
       final user = ref.read(currentUserProvider);
       if (user == null) return;
+      final authService = ref.read(authServiceProvider);
 
       await ref.read(firestoreServiceProvider).deleteAllUserData(user.uid);
-      await ref.read(authServiceProvider).deleteAccount();
+
+      try {
+        await authService.deleteAccount();
+      } on FirebaseAuthException catch (e) {
+        if (e.code == 'requires-recent-login') {
+          if (!mounted) return;
+          final reauthed = await _handleReauth(authService);
+          if (!reauthed) return;
+          await authService.deleteAccount();
+        } else {
+          rethrow;
+        }
+      }
 
       if (!mounted) return;
       Navigator.of(context)
@@ -69,6 +83,140 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
       );
+    }
+  }
+
+  Future<bool> _handleReauth(dynamic authService) async {
+    if (authService.isGoogleUser) {
+      try {
+        await authService.reauthenticateWithGoogle();
+        return true;
+      } catch (_) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Re-authentication failed. Please try again.'),
+              backgroundColor: AppColors.error,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
+            ),
+          );
+        }
+        return false;
+      }
+    }
+
+    // Email user — prompt for password
+    final passwordController = TextEditingController();
+    final password = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => Padding(
+        padding:
+            EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: C.of(context).bg,
+            borderRadius:
+                const BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: C.of(context).text30,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                'Confirm Your Password',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: C.of(context).text,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'For security, please re-enter your password to delete your account.',
+                style: TextStyle(fontSize: 13, color: C.of(context).text30),
+              ),
+              const SizedBox(height: 20),
+              TextField(
+                controller: passwordController,
+                obscureText: true,
+                style: TextStyle(color: C.of(context).text),
+                decoration: InputDecoration(
+                  hintText: 'Password',
+                  hintStyle: TextStyle(color: C.of(context).text30),
+                  prefixIcon: Icon(Icons.lock_outline,
+                      color: C.of(context).text30, size: 20),
+                  filled: true,
+                  fillColor: C.of(context).card,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide:
+                        BorderSide(color: AppColors.error, width: 1.5),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: ElevatedButton(
+                  onPressed: () =>
+                      Navigator.pop(context, passwordController.text),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.error,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14)),
+                  ),
+                  child: const Text('Confirm & Delete',
+                      style: TextStyle(fontWeight: FontWeight.w700)),
+                ),
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        ),
+      ),
+    );
+    passwordController.dispose();
+
+    if (password == null || password.isEmpty) return false;
+
+    try {
+      await authService.reauthenticateWithEmail(password);
+      return true;
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Incorrect password. Please try again.'),
+            backgroundColor: AppColors.error,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12)),
+          ),
+        );
+      }
+      return false;
     }
   }
 
