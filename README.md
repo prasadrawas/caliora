@@ -1,17 +1,62 @@
 # BiteBloom
 
-AI-powered nutrition tracking app that analyzes food from photos.
+Your AI Nutrition Companion — snap a photo of any meal and instantly get detailed nutrition analysis.
+
+**Website:** [bitebloom.prasadrawas.online](https://bitebloom.prasadrawas.online)
+
+## Features
+
+- **AI Meal Analysis** — Take a photo and get per-item nutrition breakdown (16 nutrients) powered by Google Gemini
+- **Barcode Scanning** — Scan packaged food barcodes for instant nutrition lookup
+- **Food Diary** — Browse and review meals logged by date
+- **Progress Tracking** — Weekly and monthly charts for calories, macros, and nutrition trends
+- **Meal Reminders** — Customizable daily notifications for breakfast, lunch, and dinner
+- **Dark & Light Themes** — Material 3 dual-theme design
+- **Offline Support** — Firestore offline persistence for uninterrupted tracking
+- **Data Export** — Export meal history as CSV
+
+## Tech Stack
+
+- **Flutter** (SDK ^3.12.0) — Cross-platform UI
+- **Firebase** — Auth (Google Sign-In), Firestore, Analytics
+- **Google Gemini API** — AI food image analysis with automatic model fallback
+- **Cloudinary** — Meal image storage
+- **Riverpod** — State management
+- **Local Notifications** — Scheduled meal reminders
 
 ## Getting Started
 
-This project is a starting point for a Flutter application.
+```bash
+# Install dependencies
+flutter pub get
 
-A few resources to get you started if this is your first Flutter project:
+# Create a .env file with your API keys (see .env.example)
+cp .env.example .env
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+# Run the app
+flutter run
+```
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Build for Release
+
+```bash
+# Generate release APK
+flutter build apk --release
+
+# Generate App Bundle for Play Store
+flutter build appbundle --release
+```
+
+## Project Structure
+
+```
+lib/
+├── core/           # Config, constants, theme, utilities
+├── data/           # Models and services (Firebase, Gemini, Cloudinary)
+├── providers/      # Riverpod state management
+└── presentation/   # Screens and widgets
+```
+
+## License
+
+All rights reserved.
