@@ -21,10 +21,21 @@ class AppStrings {
   static const String maintain = 'Maintain Weight';
   static const String gain = 'Gain Weight';
 
-  // Gemini prompt
-  static const String geminiPrompt = '''Analyze this food image and return ONLY a JSON object with no extra text, no markdown, no code blocks. Estimate all nutritional values per serving. Format:
+  // Gemini prompt — returns nutrition + detected items in a single call
+  static const String geminiPrompt = '''You are an expert nutritionist AI. Analyze this food image, identify every food item with portions, and calculate complete nutritional content.
+
+INSTRUCTIONS:
+1. Identify every distinct food item visible in the image.
+2. Estimate portion size of each item in grams or common units. A typical dinner plate is 26cm diameter.
+3. If Indian cuisine, use familiar terms (1 roti, 1 bowl dal, 1 cup rice).
+4. Reference USDA FoodData Central or IFCT (Indian foods) for nutrition values.
+5. Consider cooking method impact: fried adds 30-50% more calories than steamed/boiled.
+6. Be conservative — slightly overestimate rather than underestimate calories.
+7. Sum all items for total meal nutrition.
+
+Return ONLY a JSON object with no extra text, no markdown, no code blocks:
 {
-  "meal_name": "string",
+  "meal_name": "descriptive name of the complete meal",
   "calories": number,
   "protein_g": number,
   "carbs_g": number,
@@ -41,8 +52,9 @@ class AppStrings {
   "vitamin_c_mg": number,
   "vitamin_d_mcg": number,
   "vitamin_b12_mcg": number,
-  "serving_size": "string",
+  "serving_size": "estimated total weight e.g. 350g",
   "confidence": "high/medium/low",
-  "items_detected": ["list of food items"]
+  "items_detected": ["item1 (estimated_grams)", "item2 (estimated_grams)"],
+  "portion_notes": "brief explanation of how portions were estimated"
 }''';
 }
