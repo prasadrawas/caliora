@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:dio/dio.dart';
+import 'package:image/image.dart' as img;
 import '../../core/constants/app_strings.dart';
 import '../../core/utils/app_logger.dart';
 import '../models/meal_entry.dart';
@@ -14,12 +16,14 @@ class GeminiService {
   Future<MealEntry?> analyzeFood(File imageFile, {String notes = ''}) async {
     log.i('[Gemini] Starting food analysis');
     log.d('[Gemini] Image path: ${imageFile.path}');
-    log.d('[Gemini] Image size: ${await imageFile.length()} bytes');
+    final originalSize = await imageFile.length();
+    log.d('[Gemini] Original image size: $originalSize bytes');
     log.d('[Gemini] User notes: ${notes.isEmpty ? "(none)" : notes}');
 
-    final imageBytes = await imageFile.readAsBytes();
-    final base64Image = base64Encode(imageBytes);
-    log.d('[Gemini] Base64 image length: ${base64Image.length}');
+    final compressedBytes = await _compressImage(imageFile);
+    final base64Image = base64Encode(compressedBytes);
+    log.d('[Gemini] Compressed size: ${compressedBytes.length} bytes (${(compressedBytes.length / originalSize * 100).toInt()}% of original)');
+    log.d('[Gemini] Base64 length: ${base64Image.length}');
 
     var promptText = AppStrings.geminiPrompt;
     if (notes.isNotEmpty) {
@@ -133,6 +137,38 @@ class GeminiService {
       log.e('[Gemini] Stack trace: $stackTrace');
       throw GeminiAnalysisException('Failed to analyze food image: $e');
     }
+  }
+
+  /// Compress image to max 800px wide, JPEG quality 70
+  /// Reduces ~3MB photo to ~100-200KB — faster upload, same AI accuracy
+  Future<Uint8List> _compressImage(File file) async {
+    final bytes = await file.readAsBytes();
+    final image = img.decodeImage(bytes);
+
+    if (image == null) {
+      log.w('[Gemini] Could not decode image, using original');
+      return bytes;
+    }
+
+    log.d('[Gemini] Original dimensions: ${image.width}x${image.height}');
+
+    // Resize if larger than 800px
+    img.Image resized;
+    if (image.width > 800 || image.height > 800) {
+      resized = img.copyResize(
+        image,
+        width: image.width > image.height ? 800 : null,
+        height: image.height >= image.width ? 800 : null,
+        interpolation: img.Interpolation.linear,
+      );
+      log.d('[Gemini] Resized to: ${resized.width}x${resized.height}');
+    } else {
+      resized = image;
+    }
+
+    // Encode as JPEG with quality 70
+    final compressed = Uint8List.fromList(img.encodeJpg(resized, quality: 70));
+    return compressed;
   }
 }
 
