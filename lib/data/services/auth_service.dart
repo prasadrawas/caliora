@@ -42,6 +42,63 @@ class AuthService {
     }
   }
 
+  Future<UserCredential> registerWithEmail(String email, String password) async {
+    log.i('[Auth] Registering with email: $email');
+    try {
+      final credential = await _auth.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      log.i('[Auth] Registration successful: ${credential.user?.uid}');
+      return credential;
+    } on FirebaseAuthException catch (e) {
+      log.e('[Auth] Registration failed: ${e.code}');
+      throw _mapAuthException(e);
+    }
+  }
+
+  Future<UserCredential> signInWithEmail(String email, String password) async {
+    log.i('[Auth] Signing in with email: $email');
+    try {
+      final credential = await _auth.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      log.i('[Auth] Email sign-in successful: ${credential.user?.uid}');
+      return credential;
+    } on FirebaseAuthException catch (e) {
+      log.e('[Auth] Email sign-in failed: ${e.code}');
+      throw _mapAuthException(e);
+    }
+  }
+
+  Future<void> sendPasswordReset(String email) async {
+    log.i('[Auth] Sending password reset to: $email');
+    await _auth.sendPasswordResetEmail(email: email);
+  }
+
+  String _mapAuthException(FirebaseAuthException e) {
+    switch (e.code) {
+      case 'email-already-in-use':
+        return 'This email is already registered. Try signing in.';
+      case 'invalid-email':
+        return 'Please enter a valid email address.';
+      case 'weak-password':
+        return 'Password must be at least 6 characters.';
+      case 'user-not-found':
+        return 'No account found with this email.';
+      case 'wrong-password':
+      case 'invalid-credential':
+        return 'Incorrect email or password.';
+      case 'too-many-requests':
+        return 'Too many attempts. Please try again later.';
+      case 'user-disabled':
+        return 'This account has been disabled.';
+      default:
+        return e.message ?? 'Authentication failed. Please try again.';
+    }
+  }
+
   Future<void> signOut() async {
     log.i('[Auth] Signing out user: ${_auth.currentUser?.uid}');
     await _googleSignIn.signOut();
