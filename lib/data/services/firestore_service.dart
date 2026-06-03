@@ -5,6 +5,7 @@ import '../models/user_profile.dart';
 import '../models/meal_entry.dart';
 import '../models/weight_log.dart';
 import '../models/daily_summary.dart';
+import '../models/scan_history.dart';
 import '../../core/utils/date_utils.dart';
 
 class FirestoreService {
@@ -228,6 +229,25 @@ class FirestoreService {
     await updateDailySummary(userId, date, {'waterIntake': ml});
   }
 
+  // ---- Scan History ----
+
+  CollectionReference _scanHistoryCollection(String userId) =>
+      _db.collection('users').doc(userId).collection('scan_history');
+
+  Future<void> saveScanHistory(String userId, ScanHistory scan) async {
+    log.i('[Firestore] Saving scan history: ${scan.mealName}');
+    await _scanHistoryCollection(userId).add(scan.toFirestore());
+  }
+
+  Stream<List<ScanHistory>> streamScanHistory(String userId) {
+    return _scanHistoryCollection(userId)
+        .orderBy('timestamp', descending: true)
+        .limit(50)
+        .snapshots()
+        .map((snap) =>
+            snap.docs.map((doc) => ScanHistory.fromFirestore(doc)).toList());
+  }
+
   // ---- Account Deletion ----
 
   Future<void> deleteAllUserData(String userId) async {
@@ -249,6 +269,12 @@ class FirestoreService {
     // Delete daily summaries
     final summaries = await userDoc.collection('daily_summaries').get();
     for (final doc in summaries.docs) {
+      await doc.reference.delete();
+    }
+
+    // Delete scan history
+    final scans = await userDoc.collection('scan_history').get();
+    for (final doc in scans.docs) {
       await doc.reference.delete();
     }
 

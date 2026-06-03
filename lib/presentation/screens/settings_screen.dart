@@ -12,6 +12,7 @@ import '../../providers/profile_provider.dart';
 import '../../providers/theme_provider.dart';
 import '../widgets/shimmer_loader.dart';
 import 'profile_edit_screen.dart';
+import 'scan_history_screen.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -634,6 +635,19 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           const SizedBox(height: 24),
 
           // Settings items
+          _settingsTile(
+            icon: Icons.history,
+            title: 'Scan History',
+            subtitle: 'View all your meal scans',
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => const ScanHistoryScreen(),
+                ),
+              );
+            },
+            delay: 200,
+          ),
           _settingsTile(
             icon: Icons.person_outline,
             title: 'Edit Profile',

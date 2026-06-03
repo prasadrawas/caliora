@@ -9,6 +9,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/utils/app_logger.dart';
 import '../../data/models/analyzed_item.dart';
 import '../../data/models/meal_entry.dart';
+import '../../data/models/scan_history.dart';
 import '../../data/services/barcode_service.dart';
 import '../../data/services/gemini_service.dart';
 import '../../data/services/scan_limit_service.dart';
@@ -19,7 +20,16 @@ import '../../providers/profile_provider.dart';
 import '../../core/theme/theme_colors.dart';
 
 class SnapScreen extends ConsumerStatefulWidget {
-  const SnapScreen({super.key});
+  final ImageSource? initialSource;
+  final String? initialBarcode;
+  final bool initialManual;
+
+  const SnapScreen({
+    super.key,
+    this.initialSource,
+    this.initialBarcode,
+    this.initialManual = false,
+  });
 
   @override
   ConsumerState<SnapScreen> createState() => _SnapScreenState();
@@ -36,6 +46,20 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
   String? _error;
   final _notesController = TextEditingController();
   final _scanLimitService = ScanLimitService();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (widget.initialSource != null) {
+        _pickImage(widget.initialSource!);
+      } else if (widget.initialBarcode != null) {
+        _handleBarcode(widget.initialBarcode!);
+      } else if (widget.initialManual == true) {
+        _manualEntry();
+      }
+    });
+  }
 
   @override
   void dispose() {
@@ -199,6 +223,50 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
         ),
       ),
     );
+  }
+
+  void _saveScanHistory(String userId) {
+    final items = _analyzedItems;
+    int totalCal = 0;
+    double totalP = 0, totalC = 0, totalF = 0;
+    double totalFiber = 0, totalSugar = 0, totalSatFat = 0, totalSodium = 0;
+    for (final item in items) {
+      totalCal += item.calories;
+      totalP += item.protein;
+      totalC += item.carbs;
+      totalF += item.fat;
+      totalFiber += item.fiber;
+      totalSugar += item.sugar;
+      totalSatFat += item.saturatedFat;
+      totalSodium += item.sodium;
+    }
+
+    final scan = ScanHistory(
+      id: '',
+      mealName: _mealName,
+      score: _calculateMealScore(),
+      totalCalories: totalCal,
+      totalProtein: totalP,
+      totalCarbs: totalC,
+      totalFat: totalF,
+      totalFiber: totalFiber,
+      totalSugar: totalSugar,
+      totalSaturatedFat: totalSatFat,
+      totalSodium: totalSodium,
+      items: items
+          .map((i) => ScanHistoryItem(
+                name: i.name,
+                portion: i.portion,
+                calories: i.calories,
+                protein: i.protein,
+                carbs: i.carbs,
+                fat: i.fat,
+              ))
+          .toList(),
+    );
+
+    ref.read(firestoreServiceProvider).saveScanHistory(userId, scan);
+    log.d('[Snap] Scan history saved: ${scan.mealName}');
   }
 
   // ── Meal Score ────────────────────────────────────────────────────────
@@ -516,6 +584,8 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
           _analyzedItems = geminiResult.items;
           _hasEdits = false;
         });
+        // Save to scan history
+        _saveScanHistory(user.uid);
         _showResultSheet();
       }
     } on GeminiAnalysisException catch (e) {
@@ -544,19 +614,12 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
     _showResultSheet();
   }
 
-  Future<void> _scanBarcode() async {
-    HapticFeedback.lightImpact();
-
+  Future<void> _handleBarcode(String barcode) async {
     final user = ref.read(currentUserProvider);
     if (user == null) return;
     if (!await _checkScanLimit()) return;
 
-    final barcode = await Navigator.of(context).push<String>(
-      MaterialPageRoute(builder: (_) => const BarcodeScreen()),
-    );
-    if (barcode == null || !mounted) return;
-
-    log.i('[Snap] Barcode scanned: $barcode');
+    log.i('[Snap] Barcode lookup: $barcode');
     setState(() {
       _isAnalyzing = true;
       _error = null;
@@ -1721,52 +1784,7 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
                 ),
               ).animate().fadeIn(duration: 300.ms).shake(hz: 2, offset: const Offset(2, 0)),
 
-            // Action buttons row 1: Barcode + Manual
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: SizedBox(
-                      height: 48,
-                      child: OutlinedButton.icon(
-                        onPressed: _isAnalyzing ? null : _scanBarcode,
-                        icon: const Icon(Icons.qr_code_scanner, size: 18),
-                        label: const Text('Barcode'),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: AppColors.accentGreen,
-                          side: const BorderSide(color: AppColors.accentGreen),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: SizedBox(
-                      height: 48,
-                      child: OutlinedButton.icon(
-                        onPressed: _isAnalyzing ? null : _manualEntry,
-                        icon: const Icon(Icons.edit_note, size: 20),
-                        label: const Text('Manual'),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: C.of(context).text70,
-                          side: BorderSide(color: C.of(context).glassBorder),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 10),
-
-            // Action buttons row 2: Gallery + Camera
+            // Action buttons: Gallery + Camera
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
               child: Row(
