@@ -30,6 +30,11 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
   bool _isAnalyzing = false;
   bool _isSaving = false;
   String? _error;
+  String? _portionNotes;
+  String? _mealName;
+  List<DetectedItem> _detectedItems = [];
+  bool _isRecalculating = false;
+  String _itemsSnapshot = '';
 
   final _nameController = TextEditingController();
   final _caloriesController = TextEditingController();
@@ -159,7 +164,7 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Add Notes',
+                        'Meal Details',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
@@ -167,24 +172,38 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
                         ),
                       ),
                       Text(
-                        'Optional — helps AI estimate better',
+                        'Helps AI estimate portions accurately',
                         style: TextStyle(fontSize: 12, color: C.of(context).text30),
                       ),
                     ],
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
+              // Quick hint chips
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  _noteChip('Home cooked'),
+                  _noteChip('Restaurant'),
+                  _noteChip('Oil-free'),
+                  _noteChip('Deep fried'),
+                  _noteChip('Small portion'),
+                  _noteChip('Large portion'),
+                ].map((chip) => chip).toList(),
+              ),
+              const SizedBox(height: 12),
               TextField(
                 controller: _notesController,
                 maxLines: 3,
-                autofocus: true,
+                autofocus: false,
                 style: TextStyle(color: C.of(context).text),
                 decoration: InputDecoration(
                   hintText:
-                      'e.g. "2 chapatis, 1 bowl dal, oil-free prep, ~200g rice"',
+                      'e.g. "2 chapatis, 1 bowl dal, 200g rice, less oil"',
                   hintStyle: TextStyle(color: C.of(context).text30, fontSize: 13),
-                  labelText: 'Notes about this meal',
+                  labelText: 'Quantity, prep method, or ingredients',
                   alignLabelWithHint: true,
                 ),
               ),
@@ -237,6 +256,53 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
 
   final _scanLimitService = ScanLimitService();
 
+  void _populateFromNutrition(NutritionResult n) {
+    _nameController.text = n.mealName;
+    _caloriesController.text = '${n.calories}';
+    _proteinController.text = n.protein.toStringAsFixed(1);
+    _carbsController.text = n.carbs.toStringAsFixed(1);
+    _fatController.text = n.fat.toStringAsFixed(1);
+    _fiberController.text = n.fiber.toStringAsFixed(1);
+    _sugarController.text = n.sugar.toStringAsFixed(1);
+    _saturatedFatController.text = n.saturatedFat.toStringAsFixed(1);
+    _sodiumController.text = n.sodium.toStringAsFixed(1);
+    _potassiumController.text = n.potassium.toStringAsFixed(1);
+    _calciumController.text = n.calcium.toStringAsFixed(1);
+    _ironController.text = n.iron.toStringAsFixed(1);
+    _magnesiumController.text = n.magnesium.toStringAsFixed(1);
+    _vitaminAController.text = n.vitaminA.toStringAsFixed(1);
+    _vitaminCController.text = n.vitaminC.toStringAsFixed(1);
+    _vitaminDController.text = n.vitaminD.toStringAsFixed(1);
+    _vitaminB12Controller.text = n.vitaminB12.toStringAsFixed(1);
+    _servingController.text = n.servingSize;
+  }
+
+  MealEntry _buildMealEntry() {
+    return MealEntry(
+      id: '',
+      mealName: _nameController.text.trim(),
+      calories: _parsePositive(_caloriesController.text).toInt(),
+      protein: _parsePositive(_proteinController.text),
+      carbs: _parsePositive(_carbsController.text),
+      fat: _parsePositive(_fatController.text),
+      fiber: _parsePositive(_fiberController.text),
+      sugar: _parsePositive(_sugarController.text),
+      saturatedFat: _parsePositive(_saturatedFatController.text),
+      sodium: _parsePositive(_sodiumController.text),
+      potassium: _parsePositive(_potassiumController.text),
+      calcium: _parsePositive(_calciumController.text),
+      iron: _parsePositive(_ironController.text),
+      magnesium: _parsePositive(_magnesiumController.text),
+      vitaminA: _parsePositive(_vitaminAController.text),
+      vitaminC: _parsePositive(_vitaminCController.text),
+      vitaminD: _parsePositive(_vitaminDController.text),
+      vitaminB12: _parsePositive(_vitaminB12Controller.text),
+      mealType: MealEntry.mealTypeFromTime(DateTime.now()),
+      servingSize: _servingController.text,
+      itemsDetected: _detectedItems.map((i) => i.toString()).toList(),
+    );
+  }
+
   Future<bool> _checkScanLimit() async {
     final user = ref.read(currentUserProvider);
     if (user == null) return false;
@@ -274,31 +340,16 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
 
       final gemini = GeminiService(apiKey: apiKey);
       final notes = _notesController.text.trim();
-      final result = await gemini.analyzeFood(_imageFile!, notes: notes);
+      final geminiResult = await gemini.analyzeFood(_imageFile!, notes: notes);
 
-      if (result != null && mounted) {
+      if (geminiResult != null && mounted) {
         await _scanLimitService.incrementCount(user.uid);
         HapticFeedback.mediumImpact();
         setState(() {
-          _result = result;
-          _nameController.text = result.mealName;
-          _caloriesController.text = result.calories.toString();
-          _proteinController.text = result.protein.toStringAsFixed(1);
-          _carbsController.text = result.carbs.toStringAsFixed(1);
-          _fatController.text = result.fat.toStringAsFixed(1);
-          _fiberController.text = result.fiber.toStringAsFixed(1);
-          _sugarController.text = result.sugar.toStringAsFixed(1);
-          _saturatedFatController.text = result.saturatedFat.toStringAsFixed(1);
-          _sodiumController.text = result.sodium.toStringAsFixed(1);
-          _potassiumController.text = result.potassium.toStringAsFixed(1);
-          _calciumController.text = result.calcium.toStringAsFixed(1);
-          _ironController.text = result.iron.toStringAsFixed(1);
-          _magnesiumController.text = result.magnesium.toStringAsFixed(1);
-          _vitaminAController.text = result.vitaminA.toStringAsFixed(1);
-          _vitaminCController.text = result.vitaminC.toStringAsFixed(1);
-          _vitaminDController.text = result.vitaminD.toStringAsFixed(1);
-          _vitaminB12Controller.text = result.vitaminB12.toStringAsFixed(1);
-          _servingController.text = result.servingSize;
+          _portionNotes = geminiResult.portionNotes;
+          _detectedItems = geminiResult.items;
+          _populateFromNutrition(geminiResult.nutrition);
+          _result = _buildMealEntry();
         });
         _showResultSheet();
       }
@@ -405,11 +456,31 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
   }
 
   void _showResultSheet() {
+    _showNutritionSheet();
+  }
+
+  String _getItemsFingerprint() {
+    return _detectedItems
+        .map((i) => '${i.name.trim().toLowerCase()}|${i.quantity.trim().toLowerCase()}')
+        .join(',');
+  }
+
+  void _showItemsReviewSheet() {
+    _itemsSnapshot = _getItemsFingerprint();
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => _buildResultSheet(),
+      builder: (context) => _buildItemsReviewSheet(),
+    );
+  }
+
+  void _showNutritionSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _buildNutritionSheet(),
     );
   }
 
@@ -517,7 +588,335 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
     }
   }
 
-  Widget _buildResultSheet() {
+  Widget _buildItemsReviewSheet() {
+    return StatefulBuilder(
+      builder: (context, setSheetState) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.55,
+          minChildSize: 0.35,
+          maxChildSize: 0.85,
+          builder: (context, scrollController) {
+            return Stack(
+              children: [
+                Container(
+                  decoration: BoxDecoration(
+                    color: C.of(context).bg,
+                    borderRadius:
+                        const BorderRadius.vertical(top: Radius.circular(24)),
+                  ),
+                  child: Column(
+                    children: [
+                      // Fixed header
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+                        child: Column(
+                          children: [
+                            Center(
+                              child: Container(
+                                width: 40,
+                                height: 4,
+                                decoration: BoxDecoration(
+                                  color: C.of(context).text30,
+                                  borderRadius: BorderRadius.circular(2),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 14),
+                            Row(
+                              children: [
+                                Text(
+                                  'Edit Portions',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w700,
+                                    color: C.of(context).text,
+                                  ),
+                                ),
+                                const Spacer(),
+                                GestureDetector(
+                                  onTap: () {
+                                    HapticFeedback.lightImpact();
+                                    setSheetState(() {
+                                      _detectedItems.add(DetectedItem(
+                                          name: '', quantity: ''));
+                                    });
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 12, vertical: 6),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.accentGreen
+                                          .withValues(alpha: 0.1),
+                                      borderRadius:
+                                          BorderRadius.circular(10),
+                                    ),
+                                    child: const Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(Icons.add,
+                                            color: AppColors.accentGreen,
+                                            size: 16),
+                                        SizedBox(width: 4),
+                                        Text(
+                                          'Add Item',
+                                          style: TextStyle(
+                                            color: AppColors.accentGreen,
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                          ],
+                        ),
+                      ),
+
+                      // Scrollable items list
+                      Expanded(
+                        child: ListView.builder(
+                          controller: scrollController,
+                          padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+                          itemCount: _detectedItems.length,
+                          itemBuilder: (context, index) {
+                            final item = _detectedItems[index];
+                            return Container(
+                              margin: const EdgeInsets.only(bottom: 8),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 10),
+                              decoration: BoxDecoration(
+                                color: C.of(context).card,
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(
+                                    color: C.of(context).glassBorder),
+                              ),
+                              child: Row(
+                                children: [
+                                  // Food name — tap to edit
+                                  Expanded(
+                                    flex: 5,
+                                    child: GestureDetector(
+                                      onTap: () => _editItemField(
+                                          context, setSheetState, item,
+                                          isName: true),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            item.name.isEmpty
+                                                ? 'Tap to add name'
+                                                : item.name,
+                                            style: TextStyle(
+                                              fontSize: 15,
+                                              fontWeight: FontWeight.w600,
+                                              color: item.name.isEmpty
+                                                  ? C.of(context).text30
+                                                  : C.of(context).text,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            item.quantity.isEmpty
+                                                ? 'Tap to set quantity'
+                                                : item.quantity,
+                                            style: TextStyle(
+                                              fontSize: 13,
+                                              color: item.quantity.isEmpty
+                                                  ? C.of(context).text30
+                                                  : AppColors.accentGreen,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                  // Quantity edit button
+                                  GestureDetector(
+                                    onTap: () => _editItemField(
+                                        context, setSheetState, item,
+                                        isName: false),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 10, vertical: 6),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.accentGreen
+                                            .withValues(alpha: 0.08),
+                                        borderRadius:
+                                            BorderRadius.circular(8),
+                                      ),
+                                      child: const Icon(Icons.edit,
+                                          color: AppColors.accentGreen,
+                                          size: 16),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  // Delete button
+                                  GestureDetector(
+                                    onTap: () {
+                                      HapticFeedback.lightImpact();
+                                      setSheetState(() {
+                                        _detectedItems.removeAt(index);
+                                      });
+                                      setState(() {});
+                                    },
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 10, vertical: 6),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.error
+                                            .withValues(alpha: 0.08),
+                                        borderRadius:
+                                            BorderRadius.circular(8),
+                                      ),
+                                      child: const Icon(Icons.close,
+                                          color: AppColors.error,
+                                          size: 16),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+
+                      // Fixed bottom: Re-Analyse button
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+                        child: SizedBox(
+                          width: double.infinity,
+                          height: 52,
+                          child: ElevatedButton.icon(
+                            onPressed: _isRecalculating
+                                ? null
+                                : () async {
+                                    _detectedItems.removeWhere(
+                                        (i) => i.name.trim().isEmpty);
+                                    if (_detectedItems.isEmpty) return;
+
+                                    // Skip API call if nothing changed
+                                    if (_getItemsFingerprint() == _itemsSnapshot) {
+                                      Navigator.pop(context);
+                                      _showNutritionSheet();
+                                      return;
+                                    }
+
+                                    setSheetState(
+                                        () => _isRecalculating = true);
+                                    setState(() {});
+
+                                    try {
+                                      final apiKey = AppConfig.geminiApiKey;
+                                      final gemini = GeminiService(apiKey: apiKey);
+                                      final nutrition = await gemini
+                                          .calculateNutrition(_detectedItems);
+
+                                      if (nutrition != null && mounted) {
+                                        setState(() {
+                                          _populateFromNutrition(nutrition);
+                                          _result = _buildMealEntry();
+                                        });
+
+                                        if (!context.mounted) return;
+                                        HapticFeedback.mediumImpact();
+                                        Navigator.pop(context);
+                                        _showNutritionSheet();
+                                      }
+                                    } catch (e) {
+                                      if (!context.mounted) return;
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        SnackBar(
+                                          content: Text('$e'),
+                                          backgroundColor: AppColors.error,
+                                          behavior: SnackBarBehavior.floating,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(12),
+                                          ),
+                                        ),
+                                      );
+                                    } finally {
+                                      if (context.mounted) {
+                                        setSheetState(() =>
+                                            _isRecalculating = false);
+                                        setState(() {});
+                                      }
+                                    }
+                                  },
+                            icon: _isRecalculating
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: AppColors.accentGreen,
+                                    ),
+                                  )
+                                : const Icon(Icons.refresh, size: 20),
+                            label: Text(_isRecalculating
+                                ? 'Analysing...'
+                                : 'Re-Analyse'),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                // Blocking loading overlay
+                if (_isRecalculating)
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.6),
+                      borderRadius:
+                          const BorderRadius.vertical(top: Radius.circular(24)),
+                    ),
+                    child: Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const CircularProgressIndicator(
+                            color: AppColors.accentGreen,
+                            strokeWidth: 3,
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'Re-analysing meal...',
+                            style: TextStyle(
+                              color: C.of(context).text,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            'Calculating nutrition from updated items',
+                            style: TextStyle(
+                              color: C.of(context).text30,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildNutritionSheet() {
     return StatefulBuilder(
       builder: (context, setSheetState) {
         return DraggableScrollableSheet(
@@ -697,7 +1096,61 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
                   ),
                 ],
 
-                const SizedBox(height: 28),
+                // Portion estimation notes
+                if (_portionNotes != null && _portionNotes!.isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppColors.accentGreen.withValues(alpha: 0.06),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                          color: AppColors.accentGreen.withValues(alpha: 0.15)),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(Icons.info_outline,
+                            color: AppColors.accentGreen, size: 16),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            _portionNotes!,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: C.of(context).text54,
+                              height: 1.4,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+
+                // Edit Portions button
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      _showItemsReviewSheet();
+                    },
+                    icon: const Icon(Icons.edit_note, size: 20),
+                    label: const Text('Edit Portions & Items'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.accentGreen,
+                      side: const BorderSide(color: AppColors.accentGreen),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 12),
                 SizedBox(
                   width: double.infinity,
                   height: 56,
@@ -765,6 +1218,125 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
           },
         );
       },
+    );
+  }
+
+  void _editItemField(BuildContext sheetContext, StateSetter setSheetState,
+      DetectedItem item, {required bool isName}) {
+    final controller = TextEditingController(
+        text: isName ? item.name : item.quantity);
+
+    showModalBottomSheet(
+      context: sheetContext,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (ctx) => Padding(
+        padding:
+            EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: C.of(ctx).bg,
+            borderRadius:
+                const BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                isName ? 'Edit Food Name' : 'Edit Quantity',
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w700,
+                  color: C.of(ctx).text,
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: controller,
+                autofocus: true,
+                style: TextStyle(
+                  color: C.of(ctx).text,
+                  fontSize: 16,
+                ),
+                decoration: InputDecoration(
+                  hintText: isName
+                      ? 'e.g. Grilled chicken'
+                      : 'e.g. 200g, 1 cup, 2 pieces',
+                  prefixIcon: Icon(
+                    isName ? Icons.restaurant : Icons.scale,
+                    color: isName
+                        ? C.of(ctx).text54
+                        : AppColors.accentGreen,
+                    size: 20,
+                  ),
+                ),
+                onSubmitted: (_) {
+                  if (isName) {
+                    item.name = controller.text;
+                  } else {
+                    item.quantity = controller.text;
+                  }
+                  setSheetState(() {});
+                  Navigator.pop(ctx);
+                },
+              ),
+              const SizedBox(height: 14),
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton(
+                  onPressed: () {
+                    if (isName) {
+                      item.name = controller.text;
+                    } else {
+                      item.quantity = controller.text;
+                    }
+                    setSheetState(() {});
+                    Navigator.pop(ctx);
+                  },
+                  child: const Text('Done'),
+                ),
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _noteChip(String label) {
+    return GestureDetector(
+      onTap: () {
+        final current = _notesController.text;
+        if (current.isEmpty) {
+          _notesController.text = label;
+        } else {
+          _notesController.text = '$current, $label';
+        }
+        _notesController.selection = TextSelection.fromPosition(
+          TextPosition(offset: _notesController.text.length),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+        decoration: BoxDecoration(
+          color: AppColors.accentGreen.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+              color: AppColors.accentGreen.withValues(alpha: 0.2)),
+        ),
+        child: Text(
+          label,
+          style: const TextStyle(
+            fontSize: 12,
+            color: AppColors.accentGreen,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ),
     );
   }
 
