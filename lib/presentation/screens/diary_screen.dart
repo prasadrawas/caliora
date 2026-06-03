@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import '../../core/config/app_config.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/utils/app_logger.dart';
 import '../../core/utils/date_utils.dart';
@@ -61,7 +62,7 @@ class _DiaryScreenState extends ConsumerState<DiaryScreen> {
     await firestoreService.recalculateDailySummary(
       user.uid,
       selectedDate,
-      profile?.dailyCalorieTarget ?? 2000,
+      profile?.dailyCalorieTarget ?? AppConfig.defaultCalorieTarget,
     );
 
     if (!mounted) return;
@@ -80,7 +81,7 @@ class _DiaryScreenState extends ConsumerState<DiaryScreen> {
             await firestoreService.recalculateDailySummary(
               user.uid,
               selectedDate,
-              profile?.dailyCalorieTarget ?? 2000,
+              profile?.dailyCalorieTarget ?? AppConfig.defaultCalorieTarget,
             );
           },
         ),
@@ -324,7 +325,7 @@ class _DiaryScreenState extends ConsumerState<DiaryScreen> {
                                             user.uid,
                                             selectedDate,
                                             profile?.dailyCalorieTarget ??
-                                                2000,
+                                                AppConfig.defaultCalorieTarget,
                                           );
 
                                           log.i(

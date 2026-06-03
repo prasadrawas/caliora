@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../core/config/app_config.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/utils/app_logger.dart';
 import '../../data/models/meal_entry.dart';
@@ -80,9 +80,9 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
     final picker = ImagePicker();
     final picked = await picker.pickImage(
       source: source,
-      maxWidth: 1024,
-      maxHeight: 1024,
-      imageQuality: 85,
+      maxWidth: AppConfig.imagePickerMaxWidth.toDouble(),
+      maxHeight: AppConfig.imagePickerMaxWidth.toDouble(),
+      imageQuality: AppConfig.imagePickerQuality,
     );
     if (picked == null) return;
 
@@ -266,7 +266,7 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
     });
 
     try {
-      final apiKey = dotenv.env['GEMINI_API_KEY'] ?? '';
+      final apiKey = AppConfig.geminiApiKey;
       if (apiKey.isEmpty) {
         throw GeminiAnalysisException(
             'Gemini API key not configured. Add GEMINI_API_KEY to your .env file');
@@ -483,7 +483,7 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
       await firestoreService.recalculateDailySummary(
         user.uid,
         DateTime.now(),
-        profile?.dailyCalorieTarget ?? 2000,
+        profile?.dailyCalorieTarget ?? AppConfig.defaultCalorieTarget,
       );
 
       if (!mounted) return;

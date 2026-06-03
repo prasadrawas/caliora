@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:confetti/confetti.dart';
+import '../../core/config/app_config.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/utils/date_utils.dart';
 import '../../providers/auth_provider.dart';
@@ -39,7 +40,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   void _checkGoalMet(int consumed, int target) {
-    if (consumed >= (target * 0.9) && consumed <= (target * 1.1)) {
+    if (consumed >= (target * AppConfig.goalMetLower) && consumed <= (target * AppConfig.goalMetUpper)) {
       HapticFeedback.mediumImpact();
       _confettiController.play();
     }
@@ -115,7 +116,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     data: (summary) {
                       final profile = profileAsync.valueOrNull;
                       final consumed = summary?.totalCalories ?? 0;
-                      final target = profile?.dailyCalorieTarget ?? 2000;
+                      final target = profile?.dailyCalorieTarget ?? AppConfig.defaultCalorieTarget;
                       return CalorieRing(consumed: consumed, target: target);
                     },
                     loading: () => const ShimmerLoader(
@@ -124,7 +125,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       borderRadius: 100,
                     ),
                     error: (_, _) =>
-                        const CalorieRing(consumed: 0, target: 2000),
+                        CalorieRing(consumed: 0, target: AppConfig.defaultCalorieTarget),
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -384,7 +385,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             .updateWaterIntake(
                               user.uid,
                               today,
-                              currentWater + 250,
+                              currentWater + AppConfig.waterIncrement,
                             );
                       },
                       onRemove: currentWater > 0
@@ -397,7 +398,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                   .updateWaterIntake(
                                     user.uid,
                                     today,
-                                    (currentWater - 250).clamp(0, 99999),
+                                    (currentWater - AppConfig.waterIncrement).clamp(0, 99999),
                                   );
                             }
                           : null,

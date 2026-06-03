@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import '../../core/config/app_config.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/theme_colors.dart';
 import '../../core/utils/app_logger.dart';
@@ -467,13 +468,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       user.uid,
                       {
                         'dailyCalorieTarget':
-                            int.tryParse(calorieController.text) ?? 2000,
+                            int.tryParse(calorieController.text) ?? AppConfig.defaultCalorieTarget,
                         'proteinTarget':
-                            int.tryParse(proteinController.text) ?? 150,
+                            int.tryParse(proteinController.text) ?? AppConfig.defaultProteinTarget,
                         'carbsTarget':
-                            int.tryParse(carbsController.text) ?? 200,
+                            int.tryParse(carbsController.text) ?? AppConfig.defaultCarbsTarget,
                         'fatTarget':
-                            int.tryParse(fatController.text) ?? 67,
+                            int.tryParse(fatController.text) ?? AppConfig.defaultFatTarget,
                       },
                     );
 

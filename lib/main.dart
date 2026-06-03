@@ -5,6 +5,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'firebase_options.dart';
+import 'core/config/app_config.dart';
 import 'core/theme/app_theme.dart';
 import 'core/utils/app_logger.dart';
 import 'providers/theme_provider.dart';
@@ -32,7 +33,8 @@ void main() async {
 
   log.d('[App] Loading .env file');
   await dotenv.load(fileName: '.env');
-  log.d('[App] GEMINI_API_KEY present: ${dotenv.env['GEMINI_API_KEY']?.isNotEmpty ?? false}');
+  log.d('[App] GEMINI_API_KEY present: ${AppConfig.geminiApiKey.isNotEmpty}');
+  log.d('[App] Gemini model: ${AppConfig.geminiModel}');
 
   log.d('[App] Initializing Firebase');
   await Firebase.initializeApp(

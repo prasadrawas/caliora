@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import '../../core/config/app_config.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/theme_colors.dart';
 
@@ -22,7 +23,8 @@ class WaterTracker extends StatelessWidget {
   Widget build(BuildContext context) {
     final progress =
         targetMl > 0 ? (currentMl / targetMl).clamp(0.0, 1.0) : 0.0;
-    final glasses = (currentMl / 250).floor();
+    final increment = AppConfig.waterIncrement;
+    final glasses = (currentMl / increment).floor();
     final percentage = (progress * 100).round();
     final isComplete = currentMl >= targetMl;
 
@@ -166,14 +168,14 @@ class WaterTracker extends StatelessWidget {
                     border: Border.all(
                         color: AppColors.water.withValues(alpha: 0.3)),
                   ),
-                  child: const Row(
+                  child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.add, color: AppColors.water, size: 16),
-                      SizedBox(width: 4),
+                      const Icon(Icons.add, color: AppColors.water, size: 16),
+                      const SizedBox(width: 4),
                       Text(
-                        '250ml',
-                        style: TextStyle(
+                        '${increment}ml',
+                        style: const TextStyle(
                           color: AppColors.water,
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
