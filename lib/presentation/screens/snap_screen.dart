@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../core/config/app_config.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/utils/app_logger.dart';
+import '../../data/models/analyzed_item.dart';
 import '../../data/models/meal_entry.dart';
 import '../../data/services/barcode_service.dart';
 import '../../data/services/gemini_service.dart';
@@ -26,56 +27,18 @@ class SnapScreen extends ConsumerStatefulWidget {
 
 class _SnapScreenState extends ConsumerState<SnapScreen> {
   File? _imageFile;
-  MealEntry? _result;
+  List<AnalyzedItem> _analyzedItems = [];
+  String _mealName = '';
   bool _isAnalyzing = false;
   bool _isSaving = false;
-  String? _error;
-  String? _portionNotes;
-  String? _mealName;
-  List<DetectedItem> _detectedItems = [];
   bool _isRecalculating = false;
-  String _itemsSnapshot = '';
-
-  final _nameController = TextEditingController();
-  final _caloriesController = TextEditingController();
-  final _proteinController = TextEditingController();
-  final _carbsController = TextEditingController();
-  final _fatController = TextEditingController();
-  final _fiberController = TextEditingController();
-  final _sugarController = TextEditingController();
-  final _saturatedFatController = TextEditingController();
-  final _sodiumController = TextEditingController();
-  final _potassiumController = TextEditingController();
-  final _calciumController = TextEditingController();
-  final _ironController = TextEditingController();
-  final _magnesiumController = TextEditingController();
-  final _vitaminAController = TextEditingController();
-  final _vitaminCController = TextEditingController();
-  final _vitaminDController = TextEditingController();
-  final _vitaminB12Controller = TextEditingController();
-  final _servingController = TextEditingController();
+  bool _hasEdits = false;
+  String? _error;
   final _notesController = TextEditingController();
+  final _scanLimitService = ScanLimitService();
 
   @override
   void dispose() {
-    _nameController.dispose();
-    _caloriesController.dispose();
-    _proteinController.dispose();
-    _carbsController.dispose();
-    _fatController.dispose();
-    _fiberController.dispose();
-    _sugarController.dispose();
-    _saturatedFatController.dispose();
-    _sodiumController.dispose();
-    _potassiumController.dispose();
-    _calciumController.dispose();
-    _ironController.dispose();
-    _magnesiumController.dispose();
-    _vitaminAController.dispose();
-    _vitaminCController.dispose();
-    _vitaminDController.dispose();
-    _vitaminB12Controller.dispose();
-    _servingController.dispose();
     _notesController.dispose();
     super.dispose();
   }
@@ -93,27 +56,11 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
 
     setState(() {
       _imageFile = File(picked.path);
-      _result = null;
+      _analyzedItems = [];
+      _hasEdits = false;
       _error = null;
+      _mealName = '';
       _notesController.clear();
-      _nameController.clear();
-      _caloriesController.clear();
-      _proteinController.clear();
-      _carbsController.clear();
-      _fatController.clear();
-      _fiberController.clear();
-      _sugarController.clear();
-      _saturatedFatController.clear();
-      _sodiumController.clear();
-      _potassiumController.clear();
-      _calciumController.clear();
-      _ironController.clear();
-      _magnesiumController.clear();
-      _vitaminAController.clear();
-      _vitaminCController.clear();
-      _vitaminDController.clear();
-      _vitaminB12Controller.clear();
-      _servingController.clear();
     });
 
     _showNotesDialog();
@@ -254,52 +201,271 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
     );
   }
 
-  final _scanLimitService = ScanLimitService();
+  // ── Meal Score ────────────────────────────────────────────────────────
 
-  void _populateFromNutrition(NutritionResult n) {
-    _nameController.text = n.mealName;
-    _caloriesController.text = '${n.calories}';
-    _proteinController.text = n.protein.toStringAsFixed(1);
-    _carbsController.text = n.carbs.toStringAsFixed(1);
-    _fatController.text = n.fat.toStringAsFixed(1);
-    _fiberController.text = n.fiber.toStringAsFixed(1);
-    _sugarController.text = n.sugar.toStringAsFixed(1);
-    _saturatedFatController.text = n.saturatedFat.toStringAsFixed(1);
-    _sodiumController.text = n.sodium.toStringAsFixed(1);
-    _potassiumController.text = n.potassium.toStringAsFixed(1);
-    _calciumController.text = n.calcium.toStringAsFixed(1);
-    _ironController.text = n.iron.toStringAsFixed(1);
-    _magnesiumController.text = n.magnesium.toStringAsFixed(1);
-    _vitaminAController.text = n.vitaminA.toStringAsFixed(1);
-    _vitaminCController.text = n.vitaminC.toStringAsFixed(1);
-    _vitaminDController.text = n.vitaminD.toStringAsFixed(1);
-    _vitaminB12Controller.text = n.vitaminB12.toStringAsFixed(1);
-    _servingController.text = n.servingSize;
+  Widget _buildMealScore(BuildContext context) {
+    if (_analyzedItems.isEmpty) return const SizedBox.shrink();
+
+    final score = _calculateMealScore();
+    final suggestions = _getMealSuggestions();
+    final scoreColor = score >= 80
+        ? AppColors.accentGreen
+        : score >= 60
+            ? AppColors.carbs
+            : score >= 40
+                ? AppColors.warning
+                : AppColors.error;
+
+    final label = score >= 80
+        ? 'Excellent'
+        : score >= 60
+            ? 'Good'
+            : score >= 40
+                ? 'Needs Improvement'
+                : 'Poor';
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: scoreColor.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: scoreColor.withValues(alpha: 0.15)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              // Score circle
+              Container(
+                width: 50,
+                height: 50,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: scoreColor.withValues(alpha: 0.12),
+                  border: Border.all(color: scoreColor, width: 2.5),
+                ),
+                child: Center(
+                  child: Text(
+                    '$score',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                      color: scoreColor,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Meal Score',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: C.of(context).text30,
+                      ),
+                    ),
+                    Text(
+                      label,
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w700,
+                        color: scoreColor,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          if (suggestions.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            ...suggestions.map((s) => Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(s.icon, size: 14, color: s.color),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          s.text,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: C.of(context).text70,
+                            height: 1.3,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                )),
+          ],
+        ],
+      ),
+    );
   }
 
-  MealEntry _buildMealEntry() {
-    return MealEntry(
-      id: '',
-      mealName: _nameController.text.trim(),
-      calories: _parsePositive(_caloriesController.text).toInt(),
-      protein: _parsePositive(_proteinController.text),
-      carbs: _parsePositive(_carbsController.text),
-      fat: _parsePositive(_fatController.text),
-      fiber: _parsePositive(_fiberController.text),
-      sugar: _parsePositive(_sugarController.text),
-      saturatedFat: _parsePositive(_saturatedFatController.text),
-      sodium: _parsePositive(_sodiumController.text),
-      potassium: _parsePositive(_potassiumController.text),
-      calcium: _parsePositive(_calciumController.text),
-      iron: _parsePositive(_ironController.text),
-      magnesium: _parsePositive(_magnesiumController.text),
-      vitaminA: _parsePositive(_vitaminAController.text),
-      vitaminC: _parsePositive(_vitaminCController.text),
-      vitaminD: _parsePositive(_vitaminDController.text),
-      vitaminB12: _parsePositive(_vitaminB12Controller.text),
-      mealType: MealEntry.mealTypeFromTime(DateTime.now()),
-      servingSize: _servingController.text,
-      itemsDetected: _detectedItems.map((i) => i.toString()).toList(),
+  int _calculateMealScore() {
+    int score = 70; // base score
+
+    double totalCal = 0, totalP = 0, totalC = 0, totalF = 0;
+    double totalFiber = 0, totalSugar = 0, totalSatFat = 0, totalSodium = 0;
+    for (final item in _analyzedItems) {
+      totalCal += item.calories;
+      totalP += item.protein;
+      totalC += item.carbs;
+      totalF += item.fat;
+      totalFiber += item.fiber;
+      totalSugar += item.sugar;
+      totalSatFat += item.saturatedFat;
+      totalSodium += item.sodium;
+    }
+
+    // Protein: 20-35% of calories is ideal
+    final proteinPct = totalCal > 0 ? (totalP * 4 / totalCal * 100) : 0;
+    if (proteinPct >= 20 && proteinPct <= 35) score += 10;
+    if (proteinPct < 10) score -= 15;
+
+    // Fiber: >5g per meal is good
+    if (totalFiber >= 5) score += 10;
+    if (totalFiber < 2) score -= 10;
+
+    // Sugar: <15g per meal is good
+    if (totalSugar <= 15) score += 5;
+    if (totalSugar > 30) score -= 15;
+
+    // Saturated fat: <7g per meal
+    if (totalSatFat <= 7) score += 5;
+    if (totalSatFat > 15) score -= 15;
+
+    // Sodium: <800mg per meal
+    if (totalSodium <= 800) score += 5;
+    if (totalSodium > 1500) score -= 10;
+
+    // Calorie range: 300-700 per meal is balanced
+    if (totalCal >= 300 && totalCal <= 700) score += 5;
+    if (totalCal > 1000) score -= 10;
+
+    return score.clamp(0, 100);
+  }
+
+  List<_Suggestion> _getMealSuggestions() {
+    final suggestions = <_Suggestion>[];
+
+    double totalCal = 0, totalP = 0, totalC = 0, totalF = 0;
+    double totalFiber = 0, totalSugar = 0, totalSatFat = 0, totalSodium = 0;
+    for (final item in _analyzedItems) {
+      totalCal += item.calories;
+      totalP += item.protein;
+      totalC += item.carbs;
+      totalF += item.fat;
+      totalFiber += item.fiber;
+      totalSugar += item.sugar;
+      totalSatFat += item.saturatedFat;
+      totalSodium += item.sodium;
+    }
+
+    final proteinPct = totalCal > 0 ? (totalP * 4 / totalCal * 100) : 0;
+
+    // Positive feedback
+    if (proteinPct >= 20 && proteinPct <= 35) {
+      suggestions.add(_Suggestion(
+        icon: Icons.check_circle,
+        color: AppColors.accentGreen,
+        text: 'Good protein ratio (${proteinPct.toInt()}% of calories)',
+      ));
+    }
+    if (totalFiber >= 5) {
+      suggestions.add(_Suggestion(
+        icon: Icons.check_circle,
+        color: AppColors.accentGreen,
+        text: 'Good fiber content (${totalFiber.toStringAsFixed(1)}g)',
+      ));
+    }
+
+    // Improvement suggestions
+    if (proteinPct < 15) {
+      suggestions.add(_Suggestion(
+        icon: Icons.arrow_upward,
+        color: AppColors.protein,
+        text: 'Add more protein — try eggs, paneer, dal, or chicken',
+      ));
+    }
+    if (totalFiber < 3) {
+      suggestions.add(_Suggestion(
+        icon: Icons.arrow_upward,
+        color: AppColors.fiber,
+        text: 'Low fiber — add salad, vegetables, or whole grains',
+      ));
+    }
+
+    // Cut suggestions
+    if (totalSugar > 25) {
+      suggestions.add(_Suggestion(
+        icon: Icons.arrow_downward,
+        color: AppColors.warning,
+        text: 'High sugar (${totalSugar.toInt()}g) — reduce sweet items',
+      ));
+    }
+    if (totalSatFat > 12) {
+      suggestions.add(_Suggestion(
+        icon: Icons.arrow_downward,
+        color: AppColors.error,
+        text: 'High saturated fat (${totalSatFat.toInt()}g) — reduce fried/oily items',
+      ));
+    }
+    if (totalSodium > 1200) {
+      suggestions.add(_Suggestion(
+        icon: Icons.arrow_downward,
+        color: AppColors.warning,
+        text: 'High sodium (${totalSodium.toInt()}mg) — reduce salty items, papad, pickles',
+      ));
+    }
+    if (totalCal > 900) {
+      suggestions.add(_Suggestion(
+        icon: Icons.arrow_downward,
+        color: AppColors.error,
+        text: 'High calorie meal (${totalCal.toInt()} kcal) — consider smaller portions',
+      ));
+    }
+
+    return suggestions;
+  }
+
+  Widget _noteChip(String label) {
+    return GestureDetector(
+      onTap: () {
+        final current = _notesController.text;
+        if (current.isEmpty) {
+          _notesController.text = label;
+        } else {
+          _notesController.text = '$current, $label';
+        }
+        _notesController.selection = TextSelection.fromPosition(
+          TextPosition(offset: _notesController.text.length),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+        decoration: BoxDecoration(
+          color: AppColors.accentGreen.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+              color: AppColors.accentGreen.withValues(alpha: 0.2)),
+        ),
+        child: Text(
+          label,
+          style: const TextStyle(
+            fontSize: 12,
+            color: AppColors.accentGreen,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ),
     );
   }
 
@@ -346,10 +512,9 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
         await _scanLimitService.incrementCount(user.uid);
         HapticFeedback.mediumImpact();
         setState(() {
-          _portionNotes = geminiResult.portionNotes;
-          _detectedItems = geminiResult.items;
-          _populateFromNutrition(geminiResult.nutrition);
-          _result = _buildMealEntry();
+          _mealName = geminiResult.mealName;
+          _analyzedItems = geminiResult.items;
+          _hasEdits = false;
         });
         _showResultSheet();
       }
@@ -368,26 +533,12 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
 
     setState(() {
       _imageFile = null;
-      _result = null;
       _error = null;
-      _nameController.clear();
-      _caloriesController.clear();
-      _proteinController.clear();
-      _carbsController.clear();
-      _fatController.clear();
-      _fiberController.clear();
-      _sugarController.clear();
-      _saturatedFatController.clear();
-      _sodiumController.clear();
-      _potassiumController.clear();
-      _calciumController.clear();
-      _ironController.clear();
-      _magnesiumController.clear();
-      _vitaminAController.clear();
-      _vitaminCController.clear();
-      _vitaminDController.clear();
-      _vitaminB12Controller.clear();
-      _servingController.text = '1 serving';
+      _mealName = '';
+      _analyzedItems = [
+        AnalyzedItem(name: '', portion: '1 serving'),
+      ];
+      _hasEdits = false;
     });
 
     _showResultSheet();
@@ -410,7 +561,7 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
       _isAnalyzing = true;
       _error = null;
       _imageFile = null;
-      _result = null;
+      _analyzedItems = [];
     });
 
     try {
@@ -423,25 +574,30 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
       if (mounted) {
         await _scanLimitService.incrementCount(user.uid);
         setState(() {
-          _result = result;
-          _nameController.text = result.mealName;
-          _caloriesController.text = result.calories.toString();
-          _proteinController.text = result.protein.toStringAsFixed(1);
-          _carbsController.text = result.carbs.toStringAsFixed(1);
-          _fatController.text = result.fat.toStringAsFixed(1);
-          _fiberController.text = result.fiber.toStringAsFixed(1);
-          _sugarController.text = result.sugar.toStringAsFixed(1);
-          _saturatedFatController.text = result.saturatedFat.toStringAsFixed(1);
-          _sodiumController.text = result.sodium.toStringAsFixed(1);
-          _potassiumController.text = result.potassium.toStringAsFixed(1);
-          _calciumController.text = result.calcium.toStringAsFixed(1);
-          _ironController.text = result.iron.toStringAsFixed(1);
-          _magnesiumController.text = result.magnesium.toStringAsFixed(1);
-          _vitaminAController.text = result.vitaminA.toStringAsFixed(1);
-          _vitaminCController.text = result.vitaminC.toStringAsFixed(1);
-          _vitaminDController.text = result.vitaminD.toStringAsFixed(1);
-          _vitaminB12Controller.text = result.vitaminB12.toStringAsFixed(1);
-          _servingController.text = result.servingSize;
+          _mealName = result.mealName;
+          _analyzedItems = [
+            AnalyzedItem(
+              name: result.mealName,
+              portion: result.servingSize,
+              calories: result.calories,
+              protein: result.protein,
+              carbs: result.carbs,
+              fat: result.fat,
+              fiber: result.fiber,
+              sugar: result.sugar,
+              saturatedFat: result.saturatedFat,
+              sodium: result.sodium,
+              potassium: result.potassium,
+              calcium: result.calcium,
+              iron: result.iron,
+              magnesium: result.magnesium,
+              vitaminA: result.vitaminA,
+              vitaminC: result.vitaminC,
+              vitaminD: result.vitaminD,
+              vitaminB12: result.vitaminB12,
+            ),
+          ];
+          _hasEdits = false;
         });
         HapticFeedback.mediumImpact();
         _showResultSheet();
@@ -455,235 +611,125 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
     }
   }
 
+  // ── Result Sheet ──────────────────────────────────────────────────────
+
   void _showResultSheet() {
-    _showNutritionSheet();
-  }
-
-  String _getItemsFingerprint() {
-    return _detectedItems
-        .map((i) => '${i.name.trim().toLowerCase()}|${i.quantity.trim().toLowerCase()}')
-        .join(',');
-  }
-
-  void _showItemsReviewSheet() {
-    _itemsSnapshot = _getItemsFingerprint();
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => _buildItemsReviewSheet(),
-    );
-  }
+      builder: (context) => StatefulBuilder(
+        builder: (context, setSheetState) {
+          // Sum micronutrients across all items
+          double sumField(double Function(AnalyzedItem) fn) =>
+              _analyzedItems.fold<double>(0, (s, i) => s + fn(i));
+          final totalCal = _analyzedItems.fold<int>(0, (s, i) => s + i.calories);
+          final totalProtein = sumField((i) => i.protein);
+          final totalCarbs = sumField((i) => i.carbs);
+          final totalFat = sumField((i) => i.fat);
 
-  void _showNutritionSheet() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => _buildNutritionSheet(),
-    );
-  }
+          // Micronutrient pills data
+          final microPills = <MapEntry<String, String>>[
+            if (sumField((i) => i.fiber) > 0)
+              MapEntry('Fiber', '${sumField((i) => i.fiber).toStringAsFixed(1)}g'),
+            if (sumField((i) => i.sugar) > 0)
+              MapEntry('Sugar', '${sumField((i) => i.sugar).toStringAsFixed(1)}g'),
+            if (sumField((i) => i.saturatedFat) > 0)
+              MapEntry('Sat Fat', '${sumField((i) => i.saturatedFat).toStringAsFixed(1)}g'),
+            if (sumField((i) => i.sodium) > 0)
+              MapEntry('Sodium', '${sumField((i) => i.sodium).toStringAsFixed(1)}mg'),
+            if (sumField((i) => i.potassium) > 0)
+              MapEntry('Potassium', '${sumField((i) => i.potassium).toStringAsFixed(1)}mg'),
+            if (sumField((i) => i.calcium) > 0)
+              MapEntry('Calcium', '${sumField((i) => i.calcium).toStringAsFixed(1)}mg'),
+            if (sumField((i) => i.iron) > 0)
+              MapEntry('Iron', '${sumField((i) => i.iron).toStringAsFixed(1)}mg'),
+            if (sumField((i) => i.magnesium) > 0)
+              MapEntry('Magnesium', '${sumField((i) => i.magnesium).toStringAsFixed(1)}mg'),
+            if (sumField((i) => i.vitaminA) > 0)
+              MapEntry('Vit A', '${sumField((i) => i.vitaminA).toStringAsFixed(1)}mcg'),
+            if (sumField((i) => i.vitaminC) > 0)
+              MapEntry('Vit C', '${sumField((i) => i.vitaminC).toStringAsFixed(1)}mg'),
+            if (sumField((i) => i.vitaminD) > 0)
+              MapEntry('Vit D', '${sumField((i) => i.vitaminD).toStringAsFixed(1)}mcg'),
+            if (sumField((i) => i.vitaminB12) > 0)
+              MapEntry('Vit B12', '${sumField((i) => i.vitaminB12).toStringAsFixed(1)}mcg'),
+          ];
 
-  Future<void> _saveMealWithState(StateSetter setSheetState) async {
-    setState(() => _isSaving = true);
-    setSheetState(() {});
-    await _saveMeal();
-    if (mounted) {
-      setState(() => _isSaving = false);
-    }
-  }
-
-  double _parsePositive(String text) {
-    final val = double.tryParse(text) ?? 0;
-    return val < 0 ? 0 : val;
-  }
-
-  Future<void> _saveMeal() async {
-    if (_nameController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Meal name cannot be empty'),
-          backgroundColor: AppColors.error,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        ),
-      );
-      return;
-    }
-
-    try {
-      final user = ref.read(currentUserProvider);
-      if (user == null) return;
-
-      String? imageUrl;
-      if (_imageFile != null) {
-        final fileName = '${DateTime.now().millisecondsSinceEpoch}.jpg';
-        imageUrl = await StorageService()
-            .uploadMealImage(user.uid, fileName, _imageFile!);
-      }
-
-      final meal = MealEntry(
-        id: '',
-        mealName: _nameController.text.trim(),
-        calories: _parsePositive(_caloriesController.text).toInt(),
-        protein: _parsePositive(_proteinController.text),
-        carbs: _parsePositive(_carbsController.text),
-        fat: _parsePositive(_fatController.text),
-        fiber: _parsePositive(_fiberController.text),
-        sugar: _parsePositive(_sugarController.text),
-        saturatedFat: _parsePositive(_saturatedFatController.text),
-        sodium: _parsePositive(_sodiumController.text),
-        potassium: _parsePositive(_potassiumController.text),
-        calcium: _parsePositive(_calciumController.text),
-        iron: _parsePositive(_ironController.text),
-        magnesium: _parsePositive(_magnesiumController.text),
-        vitaminA: _parsePositive(_vitaminAController.text),
-        vitaminC: _parsePositive(_vitaminCController.text),
-        vitaminD: _parsePositive(_vitaminDController.text),
-        vitaminB12: _parsePositive(_vitaminB12Controller.text),
-        imageUrl: imageUrl,
-        mealType: MealEntry.mealTypeFromTime(DateTime.now()),
-        servingSize: _servingController.text,
-        itemsDetected: _result?.itemsDetected ?? [],
-      );
-
-      final firestoreService = ref.read(firestoreServiceProvider);
-      await firestoreService.addMeal(user.uid, meal);
-
-      final profile = await firestoreService.getProfile(user.uid);
-      await firestoreService.recalculateDailySummary(
-        user.uid,
-        DateTime.now(),
-        profile?.dailyCalorieTarget ?? AppConfig.defaultCalorieTarget,
-      );
-
-      if (!mounted) return;
-      HapticFeedback.heavyImpact();
-      Navigator.of(context).pop();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Meal logged successfully!'),
-          backgroundColor: AppColors.accentGreen,
-          behavior: SnackBarBehavior.floating,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        ),
-      );
-
-      setState(() {
-        _imageFile = null;
-        _result = null;
-      });
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error saving meal: $e'),
-          backgroundColor: AppColors.error,
-          behavior: SnackBarBehavior.floating,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        ),
-      );
-    }
-  }
-
-  Widget _buildItemsReviewSheet() {
-    return StatefulBuilder(
-      builder: (context, setSheetState) {
-        return DraggableScrollableSheet(
-          initialChildSize: 0.55,
-          minChildSize: 0.35,
-          maxChildSize: 0.85,
-          builder: (context, scrollController) {
-            return Stack(
-              children: [
-                Container(
-                  decoration: BoxDecoration(
-                    color: C.of(context).bg,
-                    borderRadius:
-                        const BorderRadius.vertical(top: Radius.circular(24)),
-                  ),
-                  child: Column(
-                    children: [
-                      // Fixed header
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-                        child: Column(
-                          children: [
-                            Center(
-                              child: Container(
-                                width: 40,
-                                height: 4,
-                                decoration: BoxDecoration(
-                                  color: C.of(context).text30,
-                                  borderRadius: BorderRadius.circular(2),
-                                ),
+          return DraggableScrollableSheet(
+            initialChildSize: 0.75,
+            minChildSize: 0.5,
+            maxChildSize: 0.95,
+            builder: (context, scrollController) {
+              return Stack(
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                      color: C.of(context).bg,
+                      borderRadius:
+                          const BorderRadius.vertical(top: Radius.circular(24)),
+                    ),
+                    child: SingleChildScrollView(
+                      controller: scrollController,
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Handle bar
+                          Center(
+                            child: Container(
+                              width: 40,
+                              height: 4,
+                              decoration: BoxDecoration(
+                                color: C.of(context).text30,
+                                borderRadius: BorderRadius.circular(2),
                               ),
                             ),
-                            const SizedBox(height: 14),
-                            Row(
-                              children: [
-                                Text(
-                                  'Edit Portions',
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w700,
-                                    color: C.of(context).text,
-                                  ),
-                                ),
-                                const Spacer(),
-                                GestureDetector(
-                                  onTap: () {
-                                    HapticFeedback.lightImpact();
-                                    setSheetState(() {
-                                      _detectedItems.add(DetectedItem(
-                                          name: '', quantity: ''));
-                                    });
-                                  },
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 12, vertical: 6),
-                                    decoration: BoxDecoration(
-                                      color: AppColors.accentGreen
-                                          .withValues(alpha: 0.1),
-                                      borderRadius:
-                                          BorderRadius.circular(10),
-                                    ),
-                                    child: const Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Icon(Icons.add,
-                                            color: AppColors.accentGreen,
-                                            size: 16),
-                                        SizedBox(width: 4),
-                                        Text(
-                                          'Add Item',
-                                          style: TextStyle(
-                                            color: AppColors.accentGreen,
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 12),
-                          ],
-                        ),
-                      ),
+                          ),
+                          const SizedBox(height: 20),
 
-                      // Scrollable items list
-                      Expanded(
-                        child: ListView.builder(
-                          controller: scrollController,
-                          padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
-                          itemCount: _detectedItems.length,
-                          itemBuilder: (context, index) {
-                            final item = _detectedItems[index];
+                          // ── Meal Score ──
+                          _buildMealScore(context),
+                          const SizedBox(height: 16),
+
+                          // ── Section 1: Meal Name ──
+                          TextField(
+                            controller: TextEditingController(text: _mealName),
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w700,
+                              color: C.of(context).text,
+                            ),
+                            decoration: InputDecoration(
+                              hintText: 'Meal name',
+                              hintStyle: TextStyle(
+                                color: C.of(context).text30,
+                                fontWeight: FontWeight.w700,
+                              ),
+                              prefixIcon: const Icon(Icons.restaurant,
+                                  color: AppColors.accentGreen, size: 22),
+                              border: InputBorder.none,
+                              contentPadding:
+                                  const EdgeInsets.symmetric(vertical: 8),
+                            ),
+                            onChanged: (v) => _mealName = v,
+                          ),
+                          Divider(color: C.of(context).glassBorder),
+                          const SizedBox(height: 12),
+
+                          // ── Section 2: Items List ──
+                          Text(
+                            'Items',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: C.of(context).text54,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          ..._analyzedItems.asMap().entries.map((entry) {
+                            final index = entry.key;
+                            final item = entry.value;
                             return Container(
                               margin: const EdgeInsets.only(bottom: 8),
                               padding: const EdgeInsets.symmetric(
@@ -696,660 +742,335 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
                               ),
                               child: Row(
                                 children: [
-                                  // Food name — tap to edit
                                   Expanded(
-                                    flex: 5,
-                                    child: GestureDetector(
-                                      onTap: () => _editItemField(
-                                          context, setSheetState, item,
-                                          isName: true),
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            item.name.isEmpty
-                                                ? 'Tap to add name'
-                                                : item.name,
-                                            style: TextStyle(
-                                              fontSize: 15,
-                                              fontWeight: FontWeight.w600,
-                                              color: item.name.isEmpty
-                                                  ? C.of(context).text30
-                                                  : C.of(context).text,
-                                            ),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          item.name.isEmpty
+                                              ? 'Untitled item'
+                                              : item.name,
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w700,
+                                            color: item.name.isEmpty
+                                                ? C.of(context).text30
+                                                : C.of(context).text,
                                           ),
-                                          const SizedBox(height: 2),
-                                          Text(
-                                            item.quantity.isEmpty
-                                                ? 'Tap to set quantity'
-                                                : item.quantity,
-                                            style: TextStyle(
-                                              fontSize: 13,
-                                              color: item.quantity.isEmpty
-                                                  ? C.of(context).text30
-                                                  : AppColors.accentGreen,
-                                              fontWeight: FontWeight.w500,
-                                            ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          item.portion,
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            color: AppColors.accentGreen,
+                                            fontWeight: FontWeight.w500,
                                           ),
-                                        ],
-                                      ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          '${item.calories} kcal  \u2022  P ${item.protein.toStringAsFixed(1)}g  \u2022  C ${item.carbs.toStringAsFixed(1)}g  \u2022  F ${item.fat.toStringAsFixed(1)}g',
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            color: C.of(context).text54,
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
-                                  // Quantity edit button
-                                  GestureDetector(
-                                    onTap: () => _editItemField(
-                                        context, setSheetState, item,
-                                        isName: false),
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 10, vertical: 6),
-                                      decoration: BoxDecoration(
-                                        color: AppColors.accentGreen
-                                            .withValues(alpha: 0.08),
-                                        borderRadius:
-                                            BorderRadius.circular(8),
+                                  // Edit + Delete buttons
+                                  Column(
+                                    children: [
+                                      GestureDetector(
+                                        onTap: () => _showItemEditor(
+                                            index, setSheetState),
+                                        child: Container(
+                                          padding: const EdgeInsets.all(6),
+                                          decoration: BoxDecoration(
+                                            color: AppColors.accentGreen
+                                                .withValues(alpha: 0.08),
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                          ),
+                                          child: const Icon(Icons.edit,
+                                              color: AppColors.accentGreen,
+                                              size: 16),
+                                        ),
                                       ),
-                                      child: const Icon(Icons.edit,
-                                          color: AppColors.accentGreen,
-                                          size: 16),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 6),
-                                  // Delete button
-                                  GestureDetector(
-                                    onTap: () {
-                                      HapticFeedback.lightImpact();
-                                      setSheetState(() {
-                                        _detectedItems.removeAt(index);
-                                      });
-                                      setState(() {});
-                                    },
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 10, vertical: 6),
-                                      decoration: BoxDecoration(
-                                        color: AppColors.error
-                                            .withValues(alpha: 0.08),
-                                        borderRadius:
-                                            BorderRadius.circular(8),
+                                      const SizedBox(height: 6),
+                                      GestureDetector(
+                                        onTap: () {
+                                          HapticFeedback.lightImpact();
+                                          setSheetState(() {
+                                            _analyzedItems.removeAt(index);
+                                            _hasEdits = true;
+                                          });
+                                          setState(() {});
+                                        },
+                                        child: Container(
+                                          padding: const EdgeInsets.all(6),
+                                          decoration: BoxDecoration(
+                                            color: AppColors.error
+                                                .withValues(alpha: 0.08),
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                          ),
+                                          child: const Icon(Icons.close,
+                                              color: AppColors.error,
+                                              size: 16),
+                                        ),
                                       ),
-                                      child: const Icon(Icons.close,
-                                          color: AppColors.error,
-                                          size: 16),
-                                    ),
+                                    ],
                                   ),
                                 ],
                               ),
                             );
-                          },
-                        ),
-                      ),
+                          }),
 
-                      // Fixed bottom: Re-Analyse button
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
-                        child: SizedBox(
-                          width: double.infinity,
-                          height: 52,
-                          child: ElevatedButton.icon(
-                            onPressed: _isRecalculating
-                                ? null
-                                : () async {
-                                    _detectedItems.removeWhere(
-                                        (i) => i.name.trim().isEmpty);
-                                    if (_detectedItems.isEmpty) return;
-
-                                    // Skip API call if nothing changed
-                                    if (_getItemsFingerprint() == _itemsSnapshot) {
-                                      Navigator.pop(context);
-                                      _showNutritionSheet();
-                                      return;
-                                    }
-
-                                    setSheetState(
-                                        () => _isRecalculating = true);
-                                    setState(() {});
-
-                                    try {
-                                      final apiKey = AppConfig.geminiApiKey;
-                                      final gemini = GeminiService(apiKey: apiKey);
-                                      final nutrition = await gemini
-                                          .calculateNutrition(_detectedItems);
-
-                                      if (nutrition != null && mounted) {
-                                        setState(() {
-                                          _populateFromNutrition(nutrition);
-                                          _result = _buildMealEntry();
-                                        });
-
-                                        if (!context.mounted) return;
-                                        HapticFeedback.mediumImpact();
-                                        Navigator.pop(context);
-                                        _showNutritionSheet();
-                                      }
-                                    } catch (e) {
-                                      if (!context.mounted) return;
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        SnackBar(
-                                          content: Text('$e'),
-                                          backgroundColor: AppColors.error,
-                                          behavior: SnackBarBehavior.floating,
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(12),
-                                          ),
-                                        ),
-                                      );
-                                    } finally {
-                                      if (context.mounted) {
-                                        setSheetState(() =>
-                                            _isRecalculating = false);
-                                        setState(() {});
-                                      }
-                                    }
-                                  },
-                            icon: _isRecalculating
-                                ? const SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
+                          // Add Item button
+                          GestureDetector(
+                            onTap: () {
+                              HapticFeedback.lightImpact();
+                              final newItem = AnalyzedItem(
+                                  name: '', portion: '1 serving');
+                              setSheetState(() {
+                                _analyzedItems.add(newItem);
+                                _hasEdits = true;
+                              });
+                              setState(() {});
+                              _showItemEditor(
+                                  _analyzedItems.length - 1, setSheetState);
+                            },
+                            child: Container(
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 12),
+                              decoration: BoxDecoration(
+                                color: AppColors.accentGreen
+                                    .withValues(alpha: 0.06),
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(
+                                  color: AppColors.accentGreen
+                                      .withValues(alpha: 0.2),
+                                ),
+                              ),
+                              child: const Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.add,
                                       color: AppColors.accentGreen,
+                                      size: 18),
+                                  SizedBox(width: 6),
+                                  Text(
+                                    'Add Item',
+                                    style: TextStyle(
+                                      color: AppColors.accentGreen,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
                                     ),
-                                  )
-                                : const Icon(Icons.refresh, size: 20),
-                            label: Text(_isRecalculating
-                                ? 'Analysing...'
-                                : 'Re-Analyse'),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                // Blocking loading overlay
-                if (_isRecalculating)
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.6),
-                      borderRadius:
-                          const BorderRadius.vertical(top: Radius.circular(24)),
-                    ),
-                    child: Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const CircularProgressIndicator(
-                            color: AppColors.accentGreen,
-                            strokeWidth: 3,
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            'Re-analysing meal...',
-                            style: TextStyle(
-                              color: C.of(context).text,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
-                          const SizedBox(height: 6),
-                          Text(
-                            'Calculating nutrition from updated items',
-                            style: TextStyle(
-                              color: C.of(context).text30,
-                              fontSize: 13,
+                          const SizedBox(height: 8),
+
+                          // Quick summary row
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 12),
+                            decoration: BoxDecoration(
+                              color: C.of(context).card,
+                              borderRadius: BorderRadius.circular(14),
+                              border:
+                                  Border.all(color: C.of(context).glassBorder),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                              children: [
+                                _quickStat('$totalCal', 'kcal',
+                                    AppColors.accentGreen),
+                                _quickStatDivider(),
+                                _quickStat(
+                                    '${totalProtein.toStringAsFixed(1)}g',
+                                    'Protein',
+                                    AppColors.protein),
+                                _quickStatDivider(),
+                                _quickStat(
+                                    '${totalCarbs.toStringAsFixed(1)}g',
+                                    'Carbs',
+                                    AppColors.carbs),
+                                _quickStatDivider(),
+                                _quickStat('${totalFat.toStringAsFixed(1)}g',
+                                    'Fat', AppColors.fat),
+                              ],
                             ),
                           ),
+
+                          // ── Section 3: Combined Micronutrients ──
+                          if (microPills.isNotEmpty) ...[
+                            const SizedBox(height: 16),
+                            Text(
+                              'Vitamins & Minerals',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: C.of(context).text54,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: C.of(context).card,
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(
+                                    color: C.of(context).glassBorder),
+                              ),
+                              child: Wrap(
+                                spacing: 6,
+                                runSpacing: 6,
+                                children: microPills.map((pill) {
+                                  return Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 10, vertical: 5),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.accentGreen
+                                          .withValues(alpha: 0.08),
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: Text(
+                                      '${pill.key} ${pill.value}',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w500,
+                                        color: C.of(context).text70,
+                                      ),
+                                    ),
+                                  );
+                                }).toList(),
+                              ),
+                            ),
+                          ],
+
+                          // ── Section 4: Bottom Buttons ──
+                          const SizedBox(height: 20),
+                          if (_hasEdits) ...[
+                            SizedBox(
+                              width: double.infinity,
+                              height: 48,
+                              child: OutlinedButton.icon(
+                                onPressed: _isRecalculating
+                                    ? null
+                                    : () => _reAnalyse(setSheetState),
+                                icon: _isRecalculating
+                                    ? const SizedBox(
+                                        width: 18,
+                                        height: 18,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: AppColors.accentGreen,
+                                        ),
+                                      )
+                                    : const Icon(Icons.refresh, size: 20),
+                                label: Text(_isRecalculating
+                                    ? 'Analysing...'
+                                    : 'Re-Analyse'),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: AppColors.accentGreen,
+                                  side: const BorderSide(
+                                      color: AppColors.accentGreen),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                          ],
+                          SizedBox(
+                            width: double.infinity,
+                            height: 56,
+                            child: ElevatedButton(
+                              onPressed: _isSaving
+                                  ? null
+                                  : () => _logMeal(setSheetState),
+                              child: _isSaving
+                                  ? SizedBox(
+                                      width: 24,
+                                      height: 24,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2.5,
+                                        color: C.of(context).bg,
+                                      ),
+                                    )
+                                  : const Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Icon(Icons.check_circle_outline,
+                                            size: 20),
+                                        SizedBox(width: 8),
+                                        Text('Log Meal'),
+                                      ],
+                                    ),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
                         ],
                       ),
                     ),
                   ),
-              ],
-            );
-          },
-        );
-      },
-    );
-  }
 
-  Widget _buildNutritionSheet() {
-    return StatefulBuilder(
-      builder: (context, setSheetState) {
-        return DraggableScrollableSheet(
-          initialChildSize: 0.75,
-          minChildSize: 0.5,
-          maxChildSize: 0.95,
-          builder: (context, scrollController) {
-            return Stack(
-              children: [
-                Container(
-                  decoration: BoxDecoration(
-                    color: C.of(context).bg,
-                    borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-                  ),
-                  child: SingleChildScrollView(
-                    controller: scrollController,
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                // Handle bar
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: C.of(context).text30,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-
-                // Header with icon
-                Row(
-                  children: [
+                  // Blocking loading overlay
+                  if (_isSaving || _isRecalculating)
                     Container(
-                      padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color:
-                            AppColors.accentGreen.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(12),
+                        color: Colors.black.withValues(alpha: 0.6),
+                        borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(24)),
                       ),
-                      child: const Icon(Icons.auto_awesome,
-                          color: AppColors.accentGreen, size: 22),
-                    ),
-                    const SizedBox(width: 12),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'AI Analysis',
-                          style: Theme.of(context)
-                              .textTheme
-                              .headlineSmall
-                              ?.copyWith(fontWeight: FontWeight.w700),
-                        ),
-                        Text(
-                          'Review and edit before logging',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: C.of(context).text30,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ).animate().fadeIn(duration: 400.ms),
-                const SizedBox(height: 24),
-
-                // Quick summary card
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: C.of(context).card,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: C.of(context).glassBorder),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      _quickStat(
-                          _caloriesController.text, 'kcal', AppColors.accentGreen),
-                      _quickStatDivider(),
-                      _quickStat(
-                          '${_proteinController.text}g', 'Protein', AppColors.protein),
-                      _quickStatDivider(),
-                      _quickStat(
-                          '${_carbsController.text}g', 'Carbs', AppColors.carbs),
-                      _quickStatDivider(),
-                      _quickStat(
-                          '${_fatController.text}g', 'Fat', AppColors.fat),
-                    ],
-                  ),
-                )
-                    .animate()
-                    .fadeIn(duration: 400.ms, delay: 100.ms)
-                    .slideY(begin: 0.1, end: 0),
-                const SizedBox(height: 20),
-
-                // Editable fields
-                _editableField('Meal Name', _nameController, Icons.restaurant),
-                _editableField(
-                    'Serving Size', _servingController, Icons.straighten),
-                _editableField(
-                    'Calories', _caloriesController, Icons.local_fire_department,
-                    keyboardType: TextInputType.number),
-                const SizedBox(height: 8),
-                _fieldSectionLabel('Macronutrients'),
-                _editableField(
-                    'Protein (g)', _proteinController, Icons.fitness_center,
-                    keyboardType: TextInputType.number),
-                _editableField('Carbs (g)', _carbsController, Icons.grain,
-                    keyboardType: TextInputType.number),
-                _editableField('Fat (g)', _fatController, Icons.opacity,
-                    keyboardType: TextInputType.number),
-                _editableField('Fiber (g)', _fiberController, Icons.eco,
-                    keyboardType: TextInputType.number),
-                _editableField('Sugar (g)', _sugarController, Icons.cookie_outlined,
-                    keyboardType: TextInputType.number),
-                _editableField('Saturated Fat (g)', _saturatedFatController, Icons.water_drop_outlined,
-                    keyboardType: TextInputType.number),
-                const SizedBox(height: 8),
-                _fieldSectionLabel('Minerals'),
-                _editableField('Sodium (mg)', _sodiumController, Icons.science_outlined,
-                    keyboardType: TextInputType.number),
-                _editableField('Potassium (mg)', _potassiumController, Icons.bolt_outlined,
-                    keyboardType: TextInputType.number),
-                _editableField('Calcium (mg)', _calciumController, Icons.shield_outlined,
-                    keyboardType: TextInputType.number),
-                _editableField('Iron (mg)', _ironController, Icons.bloodtype_outlined,
-                    keyboardType: TextInputType.number),
-                _editableField('Magnesium (mg)', _magnesiumController, Icons.spa_outlined,
-                    keyboardType: TextInputType.number),
-                const SizedBox(height: 8),
-                _fieldSectionLabel('Vitamins'),
-                _editableField('Vitamin A (mcg)', _vitaminAController, Icons.visibility_outlined,
-                    keyboardType: TextInputType.number),
-                _editableField('Vitamin C (mg)', _vitaminCController, Icons.local_pharmacy_outlined,
-                    keyboardType: TextInputType.number),
-                _editableField('Vitamin D (mcg)', _vitaminDController, Icons.wb_sunny_outlined,
-                    keyboardType: TextInputType.number),
-                _editableField('Vitamin B12 (mcg)', _vitaminB12Controller, Icons.psychology_outlined,
-                    keyboardType: TextInputType.number),
-
-                if (_result?.itemsDetected.isNotEmpty == true) ...[
-                  const SizedBox(height: 16),
-                  Text(
-                    'Items Detected',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: C.of(context).text54,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 6,
-                    runSpacing: 6,
-                    children: _result!.itemsDetected
-                        .map((item) => Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 6),
-                              decoration: BoxDecoration(
-                                color: C.of(context).secondary,
-                                borderRadius: BorderRadius.circular(20),
-                                border:
-                                    Border.all(color: C.of(context).glassBorder),
+                      child: Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const CircularProgressIndicator(
+                              color: AppColors.accentGreen,
+                              strokeWidth: 3,
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              _isSaving
+                                  ? 'Logging your meal...'
+                                  : 'Re-analysing meal...',
+                              style: TextStyle(
+                                color: C.of(context).text,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
                               ),
-                              child: Text(
-                                item,
+                            ),
+                            if (_isRecalculating) ...[
+                              const SizedBox(height: 6),
+                              Text(
+                                'Calculating nutrition from updated items',
                                 style: TextStyle(
-                                    color: C.of(context).text70, fontSize: 12),
+                                  color: C.of(context).text30,
+                                  fontSize: 13,
+                                ),
                               ),
-                            ))
-                        .toList(),
-                  ),
-                ],
-
-                // Portion estimation notes
-                if (_portionNotes != null && _portionNotes!.isNotEmpty) ...[
-                  const SizedBox(height: 16),
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: AppColors.accentGreen.withValues(alpha: 0.06),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                          color: AppColors.accentGreen.withValues(alpha: 0.15)),
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Icon(Icons.info_outline,
-                            color: AppColors.accentGreen, size: 16),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            _portionNotes!,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: C.of(context).text54,
-                              height: 1.4,
-                            ),
-                          ),
+                            ],
+                          ],
                         ),
-                      ],
-                    ),
-                  ),
-                ],
-
-                // Edit Portions button
-                const SizedBox(height: 16),
-                SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: OutlinedButton.icon(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      _showItemsReviewSheet();
-                    },
-                    icon: const Icon(Icons.edit_note, size: 20),
-                    label: const Text('Edit Portions & Items'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.accentGreen,
-                      side: const BorderSide(color: AppColors.accentGreen),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
                       ),
                     ),
-                  ),
-                ),
-
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  height: 56,
-                  child: ElevatedButton(
-                    onPressed: _isSaving
-                        ? null
-                        : () {
-                            setSheetState(() {});
-                            _saveMealWithState(setSheetState);
-                          },
-                    child: _isSaving
-                        ? SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2.5,
-                              color: C.of(context).bg,
-                            ),
-                          )
-                        : const Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.check_circle_outline, size: 20),
-                              SizedBox(width: 8),
-                              Text('Log Meal'),
-                            ],
-                          ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        // Full-screen loading overlay
-        if (_isSaving)
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.6),
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(24)),
-            ),
-            child: Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  CircularProgressIndicator(
-                    color: AppColors.accentGreen,
-                    strokeWidth: 3,
-                  ),
-                  SizedBox(height: 16),
-                  Text(
-                    'Logging your meal...',
-                    style: TextStyle(
-                      color: C.of(context).text,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
                 ],
-              ),
-            ),
-          ),
-      ],
-    );
-          },
-        );
-      },
-    );
-  }
-
-  void _editItemField(BuildContext sheetContext, StateSetter setSheetState,
-      DetectedItem item, {required bool isName}) {
-    final controller = TextEditingController(
-        text: isName ? item.name : item.quantity);
-
-    showModalBottomSheet(
-      context: sheetContext,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (ctx) => Padding(
-        padding:
-            EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
-        child: Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: C.of(ctx).bg,
-            borderRadius:
-                const BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                isName ? 'Edit Food Name' : 'Edit Quantity',
-                style: TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w700,
-                  color: C.of(ctx).text,
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: controller,
-                autofocus: true,
-                style: TextStyle(
-                  color: C.of(ctx).text,
-                  fontSize: 16,
-                ),
-                decoration: InputDecoration(
-                  hintText: isName
-                      ? 'e.g. Grilled chicken'
-                      : 'e.g. 200g, 1 cup, 2 pieces',
-                  prefixIcon: Icon(
-                    isName ? Icons.restaurant : Icons.scale,
-                    color: isName
-                        ? C.of(ctx).text54
-                        : AppColors.accentGreen,
-                    size: 20,
-                  ),
-                ),
-                onSubmitted: (_) {
-                  if (isName) {
-                    item.name = controller.text;
-                  } else {
-                    item.quantity = controller.text;
-                  }
-                  setSheetState(() {});
-                  Navigator.pop(ctx);
-                },
-              ),
-              const SizedBox(height: 14),
-              SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: ElevatedButton(
-                  onPressed: () {
-                    if (isName) {
-                      item.name = controller.text;
-                    } else {
-                      item.quantity = controller.text;
-                    }
-                    setSheetState(() {});
-                    Navigator.pop(ctx);
-                  },
-                  child: const Text('Done'),
-                ),
-              ),
-              const SizedBox(height: 8),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _noteChip(String label) {
-    return GestureDetector(
-      onTap: () {
-        final current = _notesController.text;
-        if (current.isEmpty) {
-          _notesController.text = label;
-        } else {
-          _notesController.text = '$current, $label';
-        }
-        _notesController.selection = TextSelection.fromPosition(
-          TextPosition(offset: _notesController.text.length),
-        );
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-        decoration: BoxDecoration(
-          color: AppColors.accentGreen.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-              color: AppColors.accentGreen.withValues(alpha: 0.2)),
-        ),
-        child: Text(
-          label,
-          style: const TextStyle(
-            fontSize: 12,
-            color: AppColors.accentGreen,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _fieldSectionLabel(String label) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 13,
-          fontWeight: FontWeight.w600,
-          color: C.of(context).text54,
-        ),
+              );
+            },
+          );
+        },
       ),
     );
   }
@@ -1378,25 +1099,420 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
     return Container(width: 1, height: 30, color: C.of(context).glassBorder);
   }
 
-  Widget _editableField(
-    String label,
-    TextEditingController controller,
-    IconData icon, {
-    TextInputType keyboardType = TextInputType.text,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: TextFormField(
-        controller: controller,
-        keyboardType: keyboardType,
-        style: TextStyle(color: C.of(context).text),
-        decoration: InputDecoration(
-          labelText: label,
-          prefixIcon: Icon(icon, color: C.of(context).text54, size: 20),
+  // ── Item Editor ───────────────────────────────────────────────────────
+
+  void _showItemEditor(int index, StateSetter setSheetState) {
+    final item = _analyzedItems[index];
+
+    final nameCtrl = TextEditingController(text: item.name);
+    final portionCtrl = TextEditingController(text: item.portion);
+    final caloriesCtrl = TextEditingController(text: '${item.calories}');
+    final proteinCtrl =
+        TextEditingController(text: item.protein.toStringAsFixed(1));
+    final carbsCtrl =
+        TextEditingController(text: item.carbs.toStringAsFixed(1));
+    final fatCtrl = TextEditingController(text: item.fat.toStringAsFixed(1));
+    final fiberCtrl =
+        TextEditingController(text: item.fiber.toStringAsFixed(1));
+    final sugarCtrl =
+        TextEditingController(text: item.sugar.toStringAsFixed(1));
+    final satFatCtrl =
+        TextEditingController(text: item.saturatedFat.toStringAsFixed(1));
+    final sodiumCtrl =
+        TextEditingController(text: item.sodium.toStringAsFixed(1));
+    final potassiumCtrl =
+        TextEditingController(text: item.potassium.toStringAsFixed(1));
+    final calciumCtrl =
+        TextEditingController(text: item.calcium.toStringAsFixed(1));
+    final ironCtrl = TextEditingController(text: item.iron.toStringAsFixed(1));
+    final magnesiumCtrl =
+        TextEditingController(text: item.magnesium.toStringAsFixed(1));
+    final vitACtrl =
+        TextEditingController(text: item.vitaminA.toStringAsFixed(1));
+    final vitCCtrl =
+        TextEditingController(text: item.vitaminC.toStringAsFixed(1));
+    final vitDCtrl =
+        TextEditingController(text: item.vitaminD.toStringAsFixed(1));
+    final vitB12Ctrl =
+        TextEditingController(text: item.vitaminB12.toStringAsFixed(1));
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => DraggableScrollableSheet(
+        initialChildSize: 0.85,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        builder: (ctx, scrollController) => Container(
+          decoration: BoxDecoration(
+            color: C.of(ctx).bg,
+            borderRadius:
+                const BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            children: [
+              // Header
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
+                child: Column(
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 40,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: C.of(ctx).text30,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    Row(
+                      children: [
+                        Text(
+                          'Edit Item',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: C.of(ctx).text,
+                          ),
+                        ),
+                        const Spacer(),
+                        IconButton(
+                          icon: Icon(Icons.close, color: C.of(ctx).text54),
+                          onPressed: () => Navigator.pop(ctx),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+
+              // Fields
+              Expanded(
+                child: SingleChildScrollView(
+                  controller: scrollController,
+                  padding: const EdgeInsets.fromLTRB(24, 8, 24, 8),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _editorField(ctx, 'Item Name', nameCtrl, Icons.restaurant),
+                      _editorField(ctx, 'Portion', portionCtrl, Icons.straighten),
+                      _editorField(
+                          ctx, 'Calories', caloriesCtrl, Icons.local_fire_department,
+                          isNumber: true),
+                      const SizedBox(height: 8),
+                      _editorSectionLabel(ctx, 'Macros & More'),
+                      _editorFieldGrid(ctx, [
+                        _EditorFieldData('Protein (g)', proteinCtrl),
+                        _EditorFieldData('Carbs (g)', carbsCtrl),
+                        _EditorFieldData('Fat (g)', fatCtrl),
+                        _EditorFieldData('Fiber (g)', fiberCtrl),
+                        _EditorFieldData('Sugar (g)', sugarCtrl),
+                        _EditorFieldData('Sat Fat (g)', satFatCtrl),
+                      ]),
+                      const SizedBox(height: 8),
+                      _editorSectionLabel(ctx, 'Minerals'),
+                      _editorFieldGrid(ctx, [
+                        _EditorFieldData('Sodium (mg)', sodiumCtrl),
+                        _EditorFieldData('Potassium (mg)', potassiumCtrl),
+                        _EditorFieldData('Calcium (mg)', calciumCtrl),
+                        _EditorFieldData('Iron (mg)', ironCtrl),
+                        _EditorFieldData('Magnesium (mg)', magnesiumCtrl),
+                      ]),
+                      const SizedBox(height: 8),
+                      _editorSectionLabel(ctx, 'Vitamins'),
+                      _editorFieldGrid(ctx, [
+                        _EditorFieldData('Vit A (mcg)', vitACtrl),
+                        _EditorFieldData('Vit C (mg)', vitCCtrl),
+                        _EditorFieldData('Vit D (mcg)', vitDCtrl),
+                        _EditorFieldData('Vit B12 (mcg)', vitB12Ctrl),
+                      ]),
+                    ],
+                  ),
+                ),
+              ),
+
+              // Done button
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 52,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      item.name = nameCtrl.text.trim();
+                      item.portion = portionCtrl.text.trim();
+                      item.calories = _parsePositive(caloriesCtrl.text).toInt();
+                      item.protein = _parsePositive(proteinCtrl.text);
+                      item.carbs = _parsePositive(carbsCtrl.text);
+                      item.fat = _parsePositive(fatCtrl.text);
+                      item.fiber = _parsePositive(fiberCtrl.text);
+                      item.sugar = _parsePositive(sugarCtrl.text);
+                      item.saturatedFat = _parsePositive(satFatCtrl.text);
+                      item.sodium = _parsePositive(sodiumCtrl.text);
+                      item.potassium = _parsePositive(potassiumCtrl.text);
+                      item.calcium = _parsePositive(calciumCtrl.text);
+                      item.iron = _parsePositive(ironCtrl.text);
+                      item.magnesium = _parsePositive(magnesiumCtrl.text);
+                      item.vitaminA = _parsePositive(vitACtrl.text);
+                      item.vitaminC = _parsePositive(vitCCtrl.text);
+                      item.vitaminD = _parsePositive(vitDCtrl.text);
+                      item.vitaminB12 = _parsePositive(vitB12Ctrl.text);
+                      item.isUserEdited = true;
+
+                      setState(() => _hasEdits = true);
+                      setSheetState(() {});
+                      Navigator.pop(ctx);
+                    },
+                    child: const Text('Done'),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
+
+  double _parsePositive(String text) {
+    final val = double.tryParse(text) ?? 0;
+    return val < 0 ? 0 : val;
+  }
+
+  Widget _editorField(
+      BuildContext ctx, String label, TextEditingController ctrl, IconData icon,
+      {bool isNumber = false}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: TextField(
+        controller: ctrl,
+        keyboardType: isNumber ? TextInputType.number : TextInputType.text,
+        style: TextStyle(color: C.of(ctx).text, fontSize: 15),
+        decoration: InputDecoration(
+          labelText: label,
+          prefixIcon: Icon(icon, color: C.of(ctx).text54, size: 20),
+        ),
+      ),
+    );
+  }
+
+  Widget _editorSectionLabel(BuildContext ctx, String label) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+          color: C.of(ctx).text54,
+        ),
+      ),
+    );
+  }
+
+  Widget _editorFieldGrid(BuildContext ctx, List<_EditorFieldData> fields) {
+    final rows = <Widget>[];
+    for (var i = 0; i < fields.length; i += 2) {
+      final left = fields[i];
+      final right = i + 1 < fields.length ? fields[i + 1] : null;
+      rows.add(
+        Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: left.ctrl,
+                  keyboardType: TextInputType.number,
+                  style: TextStyle(color: C.of(ctx).text, fontSize: 14),
+                  decoration: InputDecoration(
+                    labelText: left.label,
+                    isDense: true,
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 12),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              if (right != null)
+                Expanded(
+                  child: TextField(
+                    controller: right.ctrl,
+                    keyboardType: TextInputType.number,
+                    style: TextStyle(color: C.of(ctx).text, fontSize: 14),
+                    decoration: InputDecoration(
+                      labelText: right.label,
+                      isDense: true,
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 12),
+                    ),
+                  ),
+                )
+              else
+                const Expanded(child: SizedBox()),
+            ],
+          ),
+        ),
+      );
+    }
+    return Column(children: rows);
+  }
+
+  // ── Re-Analyse ────────────────────────────────────────────────────────
+
+  Future<void> _reAnalyse(StateSetter setSheetState) async {
+    setSheetState(() => _isRecalculating = true);
+    setState(() {});
+
+    try {
+      final apiKey = AppConfig.geminiApiKey;
+      final gemini = GeminiService(apiKey: apiKey);
+      final result = await gemini.recalculateItems(_analyzedItems);
+
+      if (result != null && mounted) {
+        setState(() {
+          _analyzedItems = result;
+          _hasEdits = false;
+        });
+        HapticFeedback.mediumImpact();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('$e'),
+            backgroundColor: AppColors.error,
+            behavior: SnackBarBehavior.floating,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        _isRecalculating = false;
+        setSheetState(() {});
+        setState(() {});
+      }
+    }
+  }
+
+  // ── Log Meal ──────────────────────────────────────────────────────────
+
+  Future<void> _logMeal(StateSetter setSheetState) async {
+    if (_mealName.trim().isEmpty && _analyzedItems.isNotEmpty) {
+      _mealName = _analyzedItems.first.name;
+    }
+    if (_mealName.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Meal name cannot be empty'),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isSaving = true);
+    setSheetState(() {});
+
+    try {
+      final user = ref.read(currentUserProvider);
+      if (user == null) return;
+
+      String? imageUrl;
+      if (_imageFile != null) {
+        final fileName = '${DateTime.now().millisecondsSinceEpoch}.jpg';
+        imageUrl = await StorageService()
+            .uploadMealImage(user.uid, fileName, _imageFile!);
+      }
+
+      // Sum all items
+      double sumField(double Function(AnalyzedItem) fn) =>
+          _analyzedItems.fold<double>(0, (s, i) => s + fn(i));
+      final totalCal = _analyzedItems.fold<int>(0, (s, i) => s + i.calories);
+
+      final meal = MealEntry(
+        id: '',
+        mealName: _mealName.trim(),
+        calories: totalCal,
+        protein: sumField((i) => i.protein),
+        carbs: sumField((i) => i.carbs),
+        fat: sumField((i) => i.fat),
+        fiber: sumField((i) => i.fiber),
+        sugar: sumField((i) => i.sugar),
+        saturatedFat: sumField((i) => i.saturatedFat),
+        sodium: sumField((i) => i.sodium),
+        potassium: sumField((i) => i.potassium),
+        calcium: sumField((i) => i.calcium),
+        iron: sumField((i) => i.iron),
+        magnesium: sumField((i) => i.magnesium),
+        vitaminA: sumField((i) => i.vitaminA),
+        vitaminC: sumField((i) => i.vitaminC),
+        vitaminD: sumField((i) => i.vitaminD),
+        vitaminB12: sumField((i) => i.vitaminB12),
+        imageUrl: imageUrl,
+        mealType: MealEntry.mealTypeFromTime(DateTime.now()),
+        servingSize: _analyzedItems.length == 1
+            ? _analyzedItems.first.portion
+            : '${_analyzedItems.length} items',
+        itemsDetected: _analyzedItems.map((i) => i.toString()).toList(),
+      );
+
+      final firestoreService = ref.read(firestoreServiceProvider);
+      await firestoreService.addMeal(user.uid, meal);
+
+      final profile = await firestoreService.getProfile(user.uid);
+      await firestoreService.recalculateDailySummary(
+        user.uid,
+        DateTime.now(),
+        profile?.dailyCalorieTarget ?? AppConfig.defaultCalorieTarget,
+      );
+
+      if (!mounted) return;
+      HapticFeedback.heavyImpact();
+      Navigator.of(context).pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Meal logged successfully!'),
+          backgroundColor: AppColors.accentGreen,
+          behavior: SnackBarBehavior.floating,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      );
+
+      setState(() {
+        _imageFile = null;
+        _analyzedItems = [];
+        _mealName = '';
+        _hasEdits = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error saving meal: $e'),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isSaving = false);
+        setSheetState(() {});
+      }
+    }
+  }
+
+  // ── Build ─────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
@@ -1486,7 +1602,7 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
                               onTap: () {
                                 setState(() {
                                   _imageFile = null;
-                                  _result = null;
+                                  _analyzedItems = [];
                                   _error = null;
                                 });
                               },
@@ -1693,7 +1809,7 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
             ),
 
             // Show results button
-            if (_result != null && !_isAnalyzing)
+            if (_analyzedItems.isNotEmpty && !_isAnalyzing)
               Padding(
                 padding:
                     const EdgeInsets.only(left: 20, right: 20, bottom: 16),
@@ -1722,4 +1838,22 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
       ),
     );
   }
+}
+
+class _Suggestion {
+  final IconData icon;
+  final Color color;
+  final String text;
+
+  const _Suggestion({
+    required this.icon,
+    required this.color,
+    required this.text,
+  });
+}
+
+class _EditorFieldData {
+  final String label;
+  final TextEditingController ctrl;
+  _EditorFieldData(this.label, this.ctrl);
 }
