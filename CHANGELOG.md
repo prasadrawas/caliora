@@ -12,6 +12,7 @@
 - Dark and light theme with Material 3 design
 - Email/password authentication with registration, sign-in, and forgot password
 - Google Sign-In authentication
+- Secure account deletion with automatic re-authentication (Google re-auth or password prompt)
 - Firestore offline persistence
 - CSV data export with date range selection
 - Cloudinary image upload for meal photos
