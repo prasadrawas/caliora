@@ -223,7 +223,20 @@ class _HomeShellState extends State<HomeShell> {
           appBar: _currentIndex == 2
               ? null
               : AppBar(
-                  title: Text(_titles[_currentIndex]),
+                  title: _currentIndex == 0
+                      ? Text.rich(
+                          TextSpan(
+                            children: [
+                              const TextSpan(text: 'Bite'),
+                              TextSpan(
+                                text: 'Bloom',
+                                style: TextStyle(
+                                    color: AppColors.accentGreen),
+                              ),
+                            ],
+                          ),
+                        )
+                      : Text(_titles[_currentIndex]),
                   automaticallyImplyLeading: false,
                 ),
           body: AnimatedSwitcher(

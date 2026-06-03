@@ -138,10 +138,17 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
               },
             ),
             const SizedBox(height: 24),
-            Text(
-              AppStrings.appName,
+            Text.rich(
+              TextSpan(
+                children: [
+                  const TextSpan(text: 'Bite'),
+                  TextSpan(
+                    text: 'Bloom',
+                    style: TextStyle(color: AppColors.accentGreen),
+                  ),
+                ],
+              ),
               style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                    color: AppColors.accentGreen,
                     letterSpacing: 2,
                   ),
             )

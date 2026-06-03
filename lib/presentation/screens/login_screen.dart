@@ -77,11 +77,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   .animate()
                   .scale(duration: 800.ms, curve: Curves.elasticOut),
               const SizedBox(height: 32),
-              Text(
-                AppStrings.appName,
-                style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                      color: AppColors.accentGreen,
+              Text.rich(
+                TextSpan(
+                  children: [
+                    const TextSpan(text: 'Bite'),
+                    TextSpan(
+                      text: 'Bloom',
+                      style: TextStyle(color: AppColors.accentGreen),
                     ),
+                  ],
+                ),
+                style: Theme.of(context).textTheme.headlineLarge,
               )
                   .animate()
                   .fadeIn(duration: 600.ms, delay: 200.ms),

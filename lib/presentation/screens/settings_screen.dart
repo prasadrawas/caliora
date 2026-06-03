@@ -734,11 +734,20 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
           const SizedBox(height: 32),
           Center(
-            child: Text(
-              'BiteBloom v1.0.0',
-              style: TextStyle(
-                fontSize: 12,
-                color: C.of(context).text30,
+            child: Text.rich(
+              TextSpan(
+                children: [
+                  const TextSpan(text: 'Bite'),
+                  TextSpan(
+                    text: 'Bloom',
+                    style: TextStyle(color: AppColors.accentGreen),
+                  ),
+                  TextSpan(text: ' v1.0.0'),
+                ],
+                style: TextStyle(
+                  fontSize: 12,
+                  color: C.of(context).text30,
+                ),
               ),
             ),
           ),
