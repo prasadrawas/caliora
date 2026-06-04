@@ -47,6 +47,7 @@ void main() async {
         ? AndroidProvider.debug
         : AndroidProvider.playIntegrity,
   );
+  await FirebaseAppCheck.instance.setTokenAutoRefreshEnabled(true);
 
   // Enable Firestore offline persistence
   FirebaseFirestore.instance.settings = const Settings(
