@@ -57,3 +57,5 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 ios/Runner.xcworkspace/xcshareddata/swiftpm/
+
+email-list.csv
