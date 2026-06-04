@@ -64,14 +64,19 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     } else {
       log.i('[Splash] User found: ${authState.uid}');
       log.d('[Splash] Email: ${authState.email}');
-      final hasProfile =
-          await ref.read(firestoreServiceProvider).hasProfile(authState.uid);
-      if (hasProfile) {
-        log.i('[Splash] Profile exists → Home');
-        _navigateTo('/home');
-      } else {
-        log.i('[Splash] No profile → Profile Setup');
-        _navigateTo('/profile-setup');
+      try {
+        final hasProfile =
+            await ref.read(firestoreServiceProvider).hasProfile(authState.uid);
+        if (hasProfile) {
+          log.i('[Splash] Profile exists → Home');
+          _navigateTo('/home');
+        } else {
+          log.i('[Splash] No profile → Profile Setup');
+          _navigateTo('/profile-setup');
+        }
+      } catch (e) {
+        log.e('[Splash] Error checking profile: $e');
+        _navigateTo('/login');
       }
     }
   }
