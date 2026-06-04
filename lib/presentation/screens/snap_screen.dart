@@ -608,6 +608,9 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
     }
   }
 
+  bool _isManualMode = false;
+  bool _hasBeenAnalysed = false;
+
   void _manualEntry() {
     HapticFeedback.lightImpact();
     log.i('[Snap] Manual meal entry');
@@ -616,10 +619,10 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
       _imageFile = null;
       _error = null;
       _mealName = '';
-      _analyzedItems = [
-        AnalyzedItem(name: '', portion: '1 serving'),
-      ];
+      _analyzedItems = [];
       _hasEdits = false;
+      _isManualMode = true;
+      _hasBeenAnalysed = false;
     });
 
     _showResultSheet();
@@ -911,11 +914,11 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
                                   name: '', portion: '1 serving');
                               setSheetState(() {
                                 _analyzedItems.add(newItem);
-                                _hasEdits = true;
                               });
                               setState(() {});
                               _showItemEditor(
-                                  _analyzedItems.length - 1, setSheetState);
+                                  _analyzedItems.length - 1, setSheetState,
+                                  removeIfEmpty: true);
                             },
                             child: Container(
                               padding:
@@ -1031,14 +1034,18 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
 
                           // ── Section 4: Bottom Buttons ──
                           const SizedBox(height: 20),
-                          if (_hasEdits) ...[
+                          if (_analyzedItems.isNotEmpty &&
+                              (_hasEdits || (_isManualMode && !_hasBeenAnalysed))) ...[
                             SizedBox(
                               width: double.infinity,
                               height: 48,
                               child: OutlinedButton.icon(
                                 onPressed: _isRecalculating
                                     ? null
-                                    : () => _reAnalyse(setSheetState),
+                                    : () {
+                                        _reAnalyse(setSheetState);
+                                        _hasBeenAnalysed = true;
+                                      },
                                 icon: _isRecalculating
                                     ? const SizedBox(
                                         width: 18,
@@ -1048,10 +1055,15 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
                                           color: AppColors.accentGreen,
                                         ),
                                       )
-                                    : const Icon(Icons.refresh, size: 20),
+                                    : Icon(_hasBeenAnalysed
+                                        ? Icons.refresh
+                                        : Icons.auto_awesome,
+                                        size: 20),
                                 label: Text(_isRecalculating
                                     ? 'Analysing...'
-                                    : 'Re-Analyse'),
+                                    : _hasBeenAnalysed
+                                        ? 'Re-Analyse'
+                                        : 'Analyse with AI'),
                                 style: OutlinedButton.styleFrom(
                                   foregroundColor: AppColors.accentGreen,
                                   side: const BorderSide(
@@ -1080,7 +1092,9 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
                         width: double.infinity,
                         height: 56,
                         child: ElevatedButton(
-                          onPressed: _analyzedItems.isEmpty
+                          onPressed: (_analyzedItems.isEmpty ||
+                                  _analyzedItems.every((i) => i.name.trim().isEmpty) ||
+                                  _mealName.trim().isEmpty)
                               ? null
                               : () => _logMeal(setSheetState),
                           child: const Row(
@@ -1171,7 +1185,8 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
 
   // ── Item Editor ───────────────────────────────────────────────────────
 
-  void _showItemEditor(int index, StateSetter setSheetState) {
+  void _showItemEditor(int index, StateSetter setSheetState,
+      {bool removeIfEmpty = false}) {
     final item = _analyzedItems[index];
 
     final nameCtrl = TextEditingController(text: item.name);
@@ -1344,7 +1359,15 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
           ),
         ),
       ),
-    );
+    ).then((_) {
+      if (removeIfEmpty && index < _analyzedItems.length &&
+          _analyzedItems[index].name.trim().isEmpty) {
+        setSheetState(() {
+          _analyzedItems.removeAt(index);
+        });
+        setState(() {});
+      }
+    });
   }
 
   double _parsePositive(String text) {
@@ -1699,6 +1722,8 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
             _error = null;
             _hasEdits = false;
             _isAnalyzing = false;
+            _isManualMode = false;
+            _hasBeenAnalysed = false;
           });
         },
         child: AnimatedContainer(
