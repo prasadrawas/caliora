@@ -284,6 +284,7 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
 
   Widget _buildMealScore(BuildContext context) {
     if (_analyzedItems.isEmpty) return const SizedBox.shrink();
+    if (_isManualMode && !_hasBeenAnalysed) return const SizedBox.shrink();
 
     final score = _calculateMealScore();
     final suggestions = _getMealSuggestions();
