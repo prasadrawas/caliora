@@ -194,6 +194,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         hint: 'Email',
                         icon: Icons.email_outlined,
                         keyboardType: TextInputType.emailAddress,
+                        textInputAction: TextInputAction.next,
                         validator: (v) {
                           if (v == null || v.trim().isEmpty) {
                             return 'Email is required';
@@ -212,6 +213,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         hint: 'Password',
                         icon: Icons.lock_outline,
                         obscure: _obscurePassword,
+                        textInputAction: TextInputAction.done,
+                        onFieldSubmitted: _isLoading ? null : _submitEmailAuth,
                         suffix: IconButton(
                           icon: Icon(
                             _obscurePassword
@@ -438,12 +441,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     bool obscure = false,
     Widget? suffix,
     String? Function(String?)? validator,
+    TextInputAction? textInputAction,
+    VoidCallback? onFieldSubmitted,
   }) {
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
       obscureText: obscure,
       validator: validator,
+      textInputAction: textInputAction,
+      onFieldSubmitted: onFieldSubmitted != null ? (_) => onFieldSubmitted() : null,
       style: TextStyle(color: C.of(context).text),
       decoration: InputDecoration(
         hintText: hint,
