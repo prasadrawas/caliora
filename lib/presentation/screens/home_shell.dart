@@ -234,9 +234,7 @@ class _HomeShellState extends State<HomeShell> {
       children: [
         Scaffold(
           backgroundColor: C.of(context).bg,
-          appBar: _currentIndex == 2
-              ? null
-              : AppBar(
+          appBar: AppBar(
                   title: _currentIndex == 0
                       ? Text.rich(
                           TextSpan(
