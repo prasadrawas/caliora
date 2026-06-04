@@ -61,15 +61,18 @@ class MealCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        meal.mealName,
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: C.of(context).text,
+                      Tooltip(
+                        message: meal.mealName,
+                        child: Text(
+                          meal.mealName,
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: C.of(context).text,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 3),
                       Text(
@@ -168,9 +171,9 @@ class MealCard extends StatelessWidget {
 
   Widget _buildPlaceholder(BuildContext context) {
     return Container(
-      color: C.of(context).secondary,
+      color: AppColors.accentGreen.withValues(alpha: 0.08),
       child:
-          Icon(Icons.restaurant, color: C.of(context).text30, size: 22),
+          Icon(Icons.restaurant, color: AppColors.accentGreen.withValues(alpha: 0.4), size: 22),
     );
   }
 

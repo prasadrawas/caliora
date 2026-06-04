@@ -529,7 +529,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 summaryAsync.when(
                   data: (summary) {
                     final streak = summary?.streak ?? 0;
-                    if (streak <= 0) return const SizedBox.shrink();
+                    final streakIcon = streak > 0 ? '\u{1F525}' : '\u{1F331}';
+                    final streakTitle = streak > 0
+                        ? '$streak day streak!'
+                        : 'Start your streak today!';
+                    final streakSubtitle = streak > 0
+                        ? 'Keep it up, you\'re doing great!'
+                        : 'Log a meal to begin your journey';
+                    final streakColor = streak > 0
+                        ? AppColors.warning
+                        : AppColors.accentGreen;
                     return Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 16,
@@ -538,27 +547,27 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
                               colors: [
-                                AppColors.warning.withValues(alpha: 0.08),
-                                AppColors.warning.withValues(alpha: 0.03),
+                                streakColor.withValues(alpha: 0.08),
+                                streakColor.withValues(alpha: 0.03),
                               ],
                             ),
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(
-                              color: AppColors.warning.withValues(alpha: 0.2),
+                              color: streakColor.withValues(alpha: 0.2),
                             ),
                           ),
                           child: Row(
                             children: [
-                              const Text(
-                                '\u{1F525}',
-                                style: TextStyle(fontSize: 28),
+                              Text(
+                                streakIcon,
+                                style: const TextStyle(fontSize: 28),
                               ),
                               const SizedBox(width: 12),
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    '$streak day streak!',
+                                    streakTitle,
                                     style: TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.w700,
@@ -566,7 +575,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                     ),
                                   ),
                                   Text(
-                                    'Keep it up, you\'re doing great!',
+                                    streakSubtitle,
                                     style: TextStyle(
                                       fontSize: 12,
                                       color: C.of(context).text54,
