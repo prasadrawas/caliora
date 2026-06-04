@@ -54,6 +54,9 @@ class AuthService {
     } on FirebaseAuthException catch (e) {
       log.e('[Auth] Registration failed: ${e.code}');
       throw _mapAuthException(e);
+    } catch (e) {
+      log.e('[Auth] Registration error: $e');
+      throw 'Please check your internet connection and try again.';
     }
   }
 
@@ -69,12 +72,23 @@ class AuthService {
     } on FirebaseAuthException catch (e) {
       log.e('[Auth] Email sign-in failed: ${e.code}');
       throw _mapAuthException(e);
+    } catch (e) {
+      log.e('[Auth] Sign-in error: $e');
+      throw 'Please check your internet connection and try again.';
     }
   }
 
   Future<void> sendPasswordReset(String email) async {
     log.i('[Auth] Sending password reset to: $email');
-    await _auth.sendPasswordResetEmail(email: email);
+    try {
+      await _auth.sendPasswordResetEmail(email: email);
+    } on FirebaseAuthException catch (e) {
+      log.e('[Auth] Password reset failed: ${e.code}');
+      throw _mapAuthException(e);
+    } catch (e) {
+      log.e('[Auth] Password reset error: $e');
+      throw 'Please check your internet connection and try again.';
+    }
   }
 
   String _mapAuthException(FirebaseAuthException e) {
