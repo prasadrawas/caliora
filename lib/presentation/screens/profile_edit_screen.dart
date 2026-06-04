@@ -30,6 +30,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
   late String _selectedDietaryPreference;
   late String _selectedGoal;
   bool _isSaving = false;
+  bool _hasChanges = false;
 
   @override
   void initState() {
@@ -43,6 +44,40 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
     _selectedActivityLevel = p.activityLevel;
     _selectedDietaryPreference = p.dietaryPreference;
     _selectedGoal = p.goal;
+    for (final c in [_nameController, _ageController, _weightController, _heightController]) {
+      c.addListener(() => _hasChanges = true);
+    }
+  }
+
+  Future<bool> _confirmDiscard() async {
+    if (!_hasChanges) return true;
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: C.of(context).card,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text('Discard changes?',
+            style: TextStyle(color: C.of(context).text, fontWeight: FontWeight.w700)),
+        content: Text('You have unsaved changes that will be lost.',
+            style: TextStyle(color: C.of(context).text70)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text('Keep Editing', style: TextStyle(color: C.of(context).text30)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.error,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            child: const Text('Discard'),
+          ),
+        ],
+      ),
+    );
+    return result ?? false;
   }
 
   @override
@@ -157,7 +192,9 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
         title: const Text('Edit Profile'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () async {
+            if (await _confirmDiscard()) Navigator.pop(context);
+          },
         ),
       ),
       body: Form(
@@ -312,6 +349,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
     final child = GestureDetector(
         onTap: () {
           HapticFeedback.selectionClick();
+          _hasChanges = true;
           onTap(value);
         },
         child: AnimatedContainer(
@@ -363,6 +401,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
         child: GestureDetector(
           onTap: () {
             HapticFeedback.selectionClick();
+            _hasChanges = true;
             setState(() => _selectedActivityLevel = value);
           },
           child: AnimatedContainer(

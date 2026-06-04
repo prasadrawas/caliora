@@ -98,7 +98,7 @@ class ExportService {
 
     final csvData = rows.map((row) => row.map((cell) {
       final s = cell.toString();
-      if (s.contains(',') || s.contains('"') || s.contains('\n')) {
+      if (s.contains(',') || s.contains('"') || s.contains('\n') || s.contains('\t') || s.contains(';')) {
         return '"${s.replaceAll('"', '""')}"';
       }
       return s;

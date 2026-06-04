@@ -73,7 +73,7 @@ class ScanHistoryScreen extends ConsumerWidget {
                   .animate()
                   .fadeIn(
                     duration: 300.ms,
-                    delay: Duration(milliseconds: index * 50),
+                    delay: Duration(milliseconds: (index * 50).clamp(0, 500)),
                   )
                   .slideX(begin: 0.03, end: 0);
             },

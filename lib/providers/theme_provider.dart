@@ -28,8 +28,12 @@ class ThemeModeNotifier extends StateNotifier<ThemeMode> {
 
   Future<void> setTheme(ThemeMode mode) async {
     state = mode;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_prefKey, mode.name);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_prefKey, mode.name);
+    } catch (_) {
+      // Theme applied in memory even if persistence fails
+    }
   }
 
   Future<void> toggle() async {
