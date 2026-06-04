@@ -25,7 +25,7 @@ Your AI Nutrition Companion — snap a photo of any meal and instantly get detai
 ## Tech Stack
 
 - **Flutter** (SDK ^3.12.0) — Cross-platform UI
-- **Firebase** — Auth (Email/Password + Google Sign-In), Firestore, Analytics
+- **Firebase** — Auth (Email/Password + Google Sign-In), Firestore, Analytics, App Check
 - **Google Gemini API** — AI food image analysis with automatic model fallback
 - **Cloudinary** — Meal image storage
 - **Riverpod** — State management

@@ -2,6 +2,9 @@
 
 ## 1.0.1 (2026-06-04)
 
+### Added
+- Firebase App Check with Play Integrity (production) and debug provider (development) to protect Firebase services from unauthorized access
+
 ### Bug Fixes
 - Fixed Google Sign-In failing in release builds (added Play App Signing SHA-1)
 - Fixed camera and barcode scanner crash in release mode (ProGuard rules for CameraX/ML Kit)
