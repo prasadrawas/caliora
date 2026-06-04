@@ -263,7 +263,7 @@ class _HomeShellState extends State<HomeShell> {
             currentIndex: _currentIndex,
             onTap: (index) => setState(() => _currentIndex = index),
           ),
-          floatingActionButton: FloatingActionButton(
+          floatingActionButton: _currentIndex == 2 ? null : FloatingActionButton(
             onPressed: _showLogMenu,
             backgroundColor: AppColors.accentGreen,
             child: Icon(Icons.camera_alt_rounded, color: C.of(context).bg, size: 26),
