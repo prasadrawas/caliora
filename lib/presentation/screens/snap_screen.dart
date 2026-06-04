@@ -1331,6 +1331,18 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
                   height: 52,
                   child: ElevatedButton(
                     onPressed: () {
+                      if (nameCtrl.text.trim().isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: const Text('Item name is required'),
+                            backgroundColor: AppColors.error,
+                            behavior: SnackBarBehavior.floating,
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12)),
+                          ),
+                        );
+                        return;
+                      }
                       item.name = nameCtrl.text.trim();
                       item.portion = portionCtrl.text.trim();
                       item.calories = _parsePositive(caloriesCtrl.text).toInt();
