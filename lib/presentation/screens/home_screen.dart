@@ -1,22 +1,23 @@
+import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:confetti/confetti.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../../core/config/app_config.dart';
 import '../../core/constants/app_colors.dart';
-import '../../core/utils/nutrition_calculator.dart';
-import 'bmi_bmr_info_screen.dart';
+import '../../core/theme/theme_colors.dart';
 import '../../core/utils/date_utils.dart';
+import '../../core/utils/nutrition_calculator.dart';
 import '../../providers/auth_provider.dart';
-import '../../providers/profile_provider.dart';
 import '../../providers/meals_provider.dart';
+import '../../providers/profile_provider.dart';
 import '../../providers/summary_provider.dart';
 import '../widgets/calorie_ring.dart';
 import '../widgets/meal_card.dart';
-import '../widgets/water_tracker.dart';
 import '../widgets/shimmer_loader.dart';
-import '../../core/theme/theme_colors.dart';
+import '../widgets/water_tracker.dart';
+import 'bmi_bmr_info_screen.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -31,8 +32,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    _confettiController =
-        ConfettiController(duration: const Duration(seconds: 2));
+    _confettiController = ConfettiController(
+      duration: const Duration(seconds: 2),
+    );
   }
 
   @override
@@ -42,7 +44,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   void _checkGoalMet(int consumed, int target) {
-    if (consumed >= (target * AppConfig.goalMetLower) && consumed <= (target * AppConfig.goalMetUpper)) {
+    if (consumed >= (target * AppConfig.goalMetLower) &&
+        consumed <= (target * AppConfig.goalMetUpper)) {
       HapticFeedback.mediumImpact();
       _confettiController.play();
     }
@@ -84,25 +87,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   data: (profile) {
                     final name = profile?.name.split(' ').first ?? 'there';
                     return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '${AppDateUtils.getGreeting()}, $name \u{1F44B}',
-                          style: Theme.of(context)
-                              .textTheme
-                              .headlineSmall
-                              ?.copyWith(fontWeight: FontWeight.w700),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          AppDateUtils.formatFullDate(DateTime.now()),
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: C.of(context).text30,
-                          ),
-                        ),
-                      ],
-                    )
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '${AppDateUtils.getGreeting()}, $name \u{1F44B}',
+                              style: Theme.of(context).textTheme.headlineSmall
+                                  ?.copyWith(fontWeight: FontWeight.w700),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              AppDateUtils.formatFullDate(DateTime.now()),
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: C.of(context).text30,
+                              ),
+                            ),
+                          ],
+                        )
                         .animate()
                         .fadeIn(duration: 500.ms)
                         .slideX(begin: -0.05, end: 0);
@@ -118,7 +119,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     data: (summary) {
                       final profile = profileAsync.valueOrNull;
                       final consumed = summary?.totalCalories ?? 0;
-                      final target = profile?.dailyCalorieTarget ?? AppConfig.defaultCalorieTarget;
+                      final target =
+                          profile?.dailyCalorieTarget ??
+                          AppConfig.defaultCalorieTarget;
                       return CalorieRing(consumed: consumed, target: target);
                     },
                     loading: () => const ShimmerLoader(
@@ -126,8 +129,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       height: 200,
                       borderRadius: 100,
                     ),
-                    error: (_, _) =>
-                        CalorieRing(consumed: 0, target: AppConfig.defaultCalorieTarget),
+                    error: (_, _) => CalorieRing(
+                      consumed: 0,
+                      target: AppConfig.defaultCalorieTarget,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -150,104 +155,130 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     final categoryColor = bmi < 18.5
                         ? AppColors.water
                         : bmi < 25
-                            ? AppColors.accentGreen
-                            : bmi < 30
-                                ? AppColors.warning
-                                : AppColors.error;
+                        ? AppColors.accentGreen
+                        : bmi < 30
+                        ? AppColors.warning
+                        : AppColors.error;
 
                     return GestureDetector(
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => BmiBmrInfoScreen(
-                            bmi: bmi,
-                            bmr: bmr,
-                            category: category,
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => BmiBmrInfoScreen(
+                                bmi: bmi,
+                                bmr: bmr,
+                                category: category,
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
-                      child: Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: C.of(context).card,
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: C.of(context).glassBorder),
-                        ),
-                        child: Column(
-                          children: [
-                            Row(
+                          child: Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: C.of(context).card,
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: C.of(context).glassBorder,
+                              ),
+                            ),
+                            child: Column(
                               children: [
-                                Expanded(
-                                  child: Column(
-                                    children: [
-                                      Text('BMI',
-                                          style: TextStyle(
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Column(
+                                        children: [
+                                          Text(
+                                            'BMI',
+                                            style: TextStyle(
                                               color: C.of(context).text54,
                                               fontSize: 12,
-                                              fontWeight: FontWeight.w600)),
-                                      const SizedBox(height: 4),
-                                      Text(bmi.toStringAsFixed(1),
-                                          style: TextStyle(
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            bmi.toStringAsFixed(1),
+                                            style: TextStyle(
                                               color: categoryColor,
                                               fontSize: 24,
-                                              fontWeight: FontWeight.w800)),
-                                      const SizedBox(height: 2),
-                                      Text(category,
-                                          style: TextStyle(
+                                              fontWeight: FontWeight.w800,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            category,
+                                            style: TextStyle(
                                               color: categoryColor,
                                               fontSize: 11,
-                                              fontWeight: FontWeight.w600)),
-                                    ],
-                                  ),
-                                ),
-                                Container(
-                                  width: 1,
-                                  height: 50,
-                                  color: C.of(context).glassBorder,
-                                ),
-                                Expanded(
-                                  child: Column(
-                                    children: [
-                                      Text('BMR',
-                                          style: TextStyle(
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    Container(
+                                      width: 1,
+                                      height: 50,
+                                      color: C.of(context).glassBorder,
+                                    ),
+                                    Expanded(
+                                      child: Column(
+                                        children: [
+                                          Text(
+                                            'BMR',
+                                            style: TextStyle(
                                               color: C.of(context).text54,
                                               fontSize: 12,
-                                              fontWeight: FontWeight.w600)),
-                                      const SizedBox(height: 4),
-                                      Text(bmr.round().toString(),
-                                          style: TextStyle(
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            bmr.round().toString(),
+                                            style: TextStyle(
                                               color: C.of(context).text,
                                               fontSize: 24,
-                                              fontWeight: FontWeight.w800)),
-                                      const SizedBox(height: 2),
-                                      Text('kcal/day',
-                                          style: TextStyle(
+                                              fontWeight: FontWeight.w800,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            'kcal/day',
+                                            style: TextStyle(
                                               color: C.of(context).text54,
                                               fontSize: 11,
-                                              fontWeight: FontWeight.w600)),
-                                    ],
-                                  ),
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      'Tap to learn more',
+                                      style: TextStyle(
+                                        color: AppColors.accentGreen,
+                                        fontSize: 9,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Icon(
+                                      Icons.arrow_forward_ios,
+                                      color: AppColors.accentGreen,
+                                      size: 10,
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 8),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text('Tap to learn more',
-                                    style: TextStyle(
-                                        color: AppColors.accentGreen,
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w600)),
-                                const SizedBox(width: 4),
-                                Icon(Icons.arrow_forward_ios,
-                                    color: AppColors.accentGreen, size: 10),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    )
+                          ),
+                        )
                         .animate()
                         .fadeIn(duration: 500.ms, delay: 150.ms)
                         .slideY(begin: 0.1, end: 0);
@@ -263,43 +294,77 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     if (profile == null) return const SizedBox.shrink();
                     final summary = summaryAsync.valueOrNull;
                     return Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: C.of(context).card,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: C.of(context).glassBorder),
-                      ),
-                      child: Column(
-                        children: [
-                          _buildSectionHeader(
-                              'Macro Targets', Icons.track_changes),
-                          const SizedBox(height: 14),
-                          _mineralRow('Protein', summary?.totalProtein ?? 0,
-                              profile.proteinTarget.toDouble(), 'g',
-                              Icons.fitness_center, AppColors.protein),
-                          const SizedBox(height: 14),
-                          _mineralRow('Carbs', summary?.totalCarbs ?? 0,
-                              profile.carbsTarget.toDouble(), 'g',
-                              Icons.grain, AppColors.carbs),
-                          const SizedBox(height: 14),
-                          _mineralRow('Fat', summary?.totalFat ?? 0,
-                              profile.fatTarget.toDouble(), 'g',
-                              Icons.opacity, AppColors.fat),
-                          const SizedBox(height: 14),
-                          _mineralRow('Fiber', summary?.totalFiber ?? 0,
-                              25, 'g',
-                              Icons.eco, AppColors.fiber),
-                          const SizedBox(height: 14),
-                          _mineralRow('Sugar', summary?.totalSugar ?? 0,
-                              50, 'g',
-                              Icons.cookie_outlined, AppColors.warning),
-                          const SizedBox(height: 14),
-                          _mineralRow('Saturated Fat', summary?.totalSaturatedFat ?? 0,
-                              20, 'g',
-                              Icons.water_drop_outlined, AppColors.error),
-                        ],
-                      ),
-                    )
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: C.of(context).card,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: C.of(context).glassBorder,
+                            ),
+                          ),
+                          child: Column(
+                            children: [
+                              _buildSectionHeader(
+                                'Macro Targets',
+                                Icons.track_changes,
+                              ),
+                              const SizedBox(height: 14),
+                              _mineralRow(
+                                'Protein',
+                                summary?.totalProtein ?? 0,
+                                profile.proteinTarget.toDouble(),
+                                'g',
+                                Icons.fitness_center,
+                                AppColors.protein,
+                              ),
+                              const SizedBox(height: 14),
+                              _mineralRow(
+                                'Carbs',
+                                summary?.totalCarbs ?? 0,
+                                profile.carbsTarget.toDouble(),
+                                'g',
+                                Icons.grain,
+                                AppColors.carbs,
+                              ),
+                              const SizedBox(height: 14),
+                              _mineralRow(
+                                'Fat',
+                                summary?.totalFat ?? 0,
+                                profile.fatTarget.toDouble(),
+                                'g',
+                                Icons.opacity,
+                                AppColors.fat,
+                              ),
+                              const SizedBox(height: 14),
+                              _mineralRow(
+                                'Fiber',
+                                summary?.totalFiber ?? 0,
+                                25,
+                                'g',
+                                Icons.eco,
+                                AppColors.fiber,
+                              ),
+                              const SizedBox(height: 14),
+                              _mineralRow(
+                                'Sugar',
+                                summary?.totalSugar ?? 0,
+                                50,
+                                'g',
+                                Icons.cookie_outlined,
+                                AppColors.warning,
+                              ),
+                              const SizedBox(height: 14),
+                              _mineralRow(
+                                'Saturated Fat',
+                                summary?.totalSaturatedFat ?? 0,
+                                20,
+                                'g',
+                                Icons.water_drop_outlined,
+                                AppColors.error,
+                              ),
+                            ],
+                          ),
+                        )
                         .animate()
                         .fadeIn(duration: 500.ms, delay: 200.ms)
                         .slideY(begin: 0.1, end: 0);
@@ -316,64 +381,68 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       children: [
                         // Minerals Section
                         Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: C.of(context).card,
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: C.of(context).glassBorder),
-                          ),
-                          child: Column(
-                            children: [
-                              _buildSectionHeader(
-                                  'Minerals', Icons.science_outlined),
-                              const SizedBox(height: 14),
-                              _mineralRow(
-                                'Sodium',
-                                summary?.totalSodium ?? 0,
-                                2300,
-                                'mg',
-                                Icons.water_drop,
-                                AppColors.warning,
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: C.of(context).card,
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: C.of(context).glassBorder,
+                                ),
                               ),
-                              const SizedBox(height: 14),
-                              _mineralRow(
-                                'Potassium',
-                                summary?.totalPotassium ?? 0,
-                                3500,
-                                'mg',
-                                Icons.bolt,
-                                AppColors.accentGreen,
+                              child: Column(
+                                children: [
+                                  _buildSectionHeader(
+                                    'Minerals',
+                                    Icons.science_outlined,
+                                  ),
+                                  const SizedBox(height: 14),
+                                  _mineralRow(
+                                    'Sodium',
+                                    summary?.totalSodium ?? 0,
+                                    2300,
+                                    'mg',
+                                    Icons.water_drop,
+                                    AppColors.warning,
+                                  ),
+                                  const SizedBox(height: 14),
+                                  _mineralRow(
+                                    'Potassium',
+                                    summary?.totalPotassium ?? 0,
+                                    3500,
+                                    'mg',
+                                    Icons.bolt,
+                                    AppColors.accentGreen,
+                                  ),
+                                  const SizedBox(height: 14),
+                                  _mineralRow(
+                                    'Calcium',
+                                    summary?.totalCalcium ?? 0,
+                                    1000,
+                                    'mg',
+                                    Icons.shield_outlined,
+                                    C.of(context).text70,
+                                  ),
+                                  const SizedBox(height: 14),
+                                  _mineralRow(
+                                    'Iron',
+                                    summary?.totalIron ?? 0,
+                                    18,
+                                    'mg',
+                                    Icons.bloodtype_outlined,
+                                    AppColors.error,
+                                  ),
+                                  const SizedBox(height: 14),
+                                  _mineralRow(
+                                    'Magnesium',
+                                    summary?.totalMagnesium ?? 0,
+                                    400,
+                                    'mg',
+                                    Icons.spa_outlined,
+                                    AppColors.protein,
+                                  ),
+                                ],
                               ),
-                              const SizedBox(height: 14),
-                              _mineralRow(
-                                'Calcium',
-                                summary?.totalCalcium ?? 0,
-                                1000,
-                                'mg',
-                                Icons.shield_outlined,
-                                C.of(context).text70,
-                              ),
-                              const SizedBox(height: 14),
-                              _mineralRow(
-                                'Iron',
-                                summary?.totalIron ?? 0,
-                                18,
-                                'mg',
-                                Icons.bloodtype_outlined,
-                                AppColors.error,
-                              ),
-                              const SizedBox(height: 14),
-                              _mineralRow(
-                                'Magnesium',
-                                summary?.totalMagnesium ?? 0,
-                                400,
-                                'mg',
-                                Icons.spa_outlined,
-                                AppColors.protein,
-                              ),
-                            ],
-                          ),
-                        )
+                            )
                             .animate()
                             .fadeIn(duration: 500.ms, delay: 400.ms)
                             .slideY(begin: 0.1, end: 0),
@@ -381,55 +450,59 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
                         // Vitamins Section
                         Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: C.of(context).card,
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: C.of(context).glassBorder),
-                          ),
-                          child: Column(
-                            children: [
-                              _buildSectionHeader(
-                                  'Vitamins', Icons.local_pharmacy_outlined),
-                              const SizedBox(height: 14),
-                              _mineralRow(
-                                'Vitamin A',
-                                summary?.totalVitaminA ?? 0,
-                                900,
-                                'mcg',
-                                Icons.visibility_outlined,
-                                AppColors.carbs,
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: C.of(context).card,
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: C.of(context).glassBorder,
+                                ),
                               ),
-                              const SizedBox(height: 14),
-                              _mineralRow(
-                                'Vitamin C',
-                                summary?.totalVitaminC ?? 0,
-                                90,
-                                'mg',
-                                Icons.local_pharmacy_outlined,
-                                AppColors.accentGreen,
+                              child: Column(
+                                children: [
+                                  _buildSectionHeader(
+                                    'Vitamins',
+                                    Icons.local_pharmacy_outlined,
+                                  ),
+                                  const SizedBox(height: 14),
+                                  _mineralRow(
+                                    'Vitamin A',
+                                    summary?.totalVitaminA ?? 0,
+                                    900,
+                                    'mcg',
+                                    Icons.visibility_outlined,
+                                    AppColors.carbs,
+                                  ),
+                                  const SizedBox(height: 14),
+                                  _mineralRow(
+                                    'Vitamin C',
+                                    summary?.totalVitaminC ?? 0,
+                                    90,
+                                    'mg',
+                                    Icons.local_pharmacy_outlined,
+                                    AppColors.accentGreen,
+                                  ),
+                                  const SizedBox(height: 14),
+                                  _mineralRow(
+                                    'Vitamin D',
+                                    summary?.totalVitaminD ?? 0,
+                                    20,
+                                    'mcg',
+                                    Icons.wb_sunny_outlined,
+                                    AppColors.warning,
+                                  ),
+                                  const SizedBox(height: 14),
+                                  _mineralRow(
+                                    'Vitamin B12',
+                                    summary?.totalVitaminB12 ?? 0,
+                                    2.4,
+                                    'mcg',
+                                    Icons.psychology_outlined,
+                                    AppColors.protein,
+                                  ),
+                                ],
                               ),
-                              const SizedBox(height: 14),
-                              _mineralRow(
-                                'Vitamin D',
-                                summary?.totalVitaminD ?? 0,
-                                20,
-                                'mcg',
-                                Icons.wb_sunny_outlined,
-                                AppColors.warning,
-                              ),
-                              const SizedBox(height: 14),
-                              _mineralRow(
-                                'Vitamin B12',
-                                summary?.totalVitaminB12 ?? 0,
-                                2.4,
-                                'mcg',
-                                Icons.psychology_outlined,
-                                AppColors.protein,
-                              ),
-                            ],
-                          ),
-                        )
+                            )
                             .animate()
                             .fadeIn(duration: 500.ms, delay: 500.ms)
                             .slideY(begin: 0.1, end: 0),
@@ -447,47 +520,52 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     final streak = summary?.streak ?? 0;
                     if (streak <= 0) return const SizedBox.shrink();
                     return Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 14),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            AppColors.warning.withValues(alpha: 0.08),
-                            AppColors.warning.withValues(alpha: 0.03),
-                          ],
-                        ),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                            color: AppColors.warning.withValues(alpha: 0.2)),
-                      ),
-                      child: Row(
-                        children: [
-                          const Text('\u{1F525}',
-                              style: TextStyle(fontSize: 28)),
-                          const SizedBox(width: 12),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 14,
+                          ),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                AppColors.warning.withValues(alpha: 0.08),
+                                AppColors.warning.withValues(alpha: 0.03),
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: AppColors.warning.withValues(alpha: 0.2),
+                            ),
+                          ),
+                          child: Row(
                             children: [
-                              Text(
-                                '$streak day streak!',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w700,
-                                  color: C.of(context).text,
-                                ),
+                              const Text(
+                                '\u{1F525}',
+                                style: TextStyle(fontSize: 28),
                               ),
-                              Text(
-                                'Keep it up, you\'re doing great!',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: C.of(context).text54,
-                                ),
+                              const SizedBox(width: 12),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    '$streak day streak!',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w700,
+                                      color: C.of(context).text,
+                                    ),
+                                  ),
+                                  Text(
+                                    'Keep it up, you\'re doing great!',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: C.of(context).text54,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ],
                           ),
-                        ],
-                      ),
-                    )
+                        )
                         .animate()
                         .fadeIn(duration: 500.ms, delay: 350.ms)
                         .slideX(begin: -0.05, end: 0);
@@ -525,7 +603,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                   .updateWaterIntake(
                                     user.uid,
                                     today,
-                                    (currentWater - AppConfig.waterIncrement).clamp(0, 99999),
+                                    (currentWater - AppConfig.waterIncrement)
+                                        .clamp(0, 99999),
                                   );
                             }
                           : null,
@@ -537,9 +616,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 const SizedBox(height: 24),
 
                 // Today's Meals
-                _buildSectionHeader("Today's Meals", Icons.restaurant_menu)
-                    .animate()
-                    .fadeIn(duration: 400.ms, delay: 500.ms),
+                _buildSectionHeader(
+                  "Today's Meals",
+                  Icons.restaurant_menu,
+                ).animate().fadeIn(duration: 400.ms, delay: 500.ms),
                 const SizedBox(height: 12),
 
                 mealsAsync.when(
@@ -547,7 +627,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     if (meals.isEmpty) {
                       return Container(
                         padding: const EdgeInsets.symmetric(
-                            vertical: 40, horizontal: 24),
+                          vertical: 40,
+                          horizontal: 24,
+                        ),
                         decoration: BoxDecoration(
                           color: C.of(context).card,
                           borderRadius: BorderRadius.circular(20),
@@ -559,8 +641,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               Container(
                                 padding: const EdgeInsets.all(16),
                                 decoration: BoxDecoration(
-                                  color: AppColors.accentGreen
-                                      .withValues(alpha: 0.08),
+                                  color: AppColors.accentGreen.withValues(
+                                    alpha: 0.08,
+                                  ),
                                   shape: BoxShape.circle,
                                 ),
                                 child: Icon(
@@ -582,7 +665,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               Text(
                                 'Snap a photo of your meal to get started',
                                 style: TextStyle(
-                                    color: C.of(context).text30, fontSize: 13),
+                                  color: C.of(context).text30,
+                                  fontSize: 13,
+                                ),
                                 textAlign: TextAlign.center,
                               ),
                             ],
@@ -597,7 +682,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             .fadeIn(
                               duration: 400.ms,
                               delay: Duration(
-                                  milliseconds: 600 + entry.key * 100),
+                                milliseconds: 600 + entry.key * 100,
+                              ),
                             )
                             .slideX(begin: 0.05, end: 0);
                       }).toList(),
@@ -632,8 +718,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  Widget _mineralRow(String label, double current, double dailyTarget,
-      String unit, IconData icon, Color color) {
+  Widget _mineralRow(
+    String label,
+    double current,
+    double dailyTarget,
+    String unit,
+    IconData icon,
+    Color color,
+  ) {
     final pct = dailyTarget > 0 ? (current / dailyTarget).clamp(0.0, 1.0) : 0.0;
     final pctDisplay = (pct * 100).round();
     final isOver = current > dailyTarget;
@@ -764,8 +856,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             GestureDetector(
               onTap: onRetry,
               child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.error.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(10),
