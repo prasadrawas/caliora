@@ -266,7 +266,7 @@ class _HomeShellState extends State<HomeShell> {
           floatingActionButton: FloatingActionButton(
             onPressed: _showLogMenu,
             backgroundColor: AppColors.accentGreen,
-            child: Icon(Icons.add, color: C.of(context).bg, size: 28),
+            child: Icon(Icons.camera_alt_rounded, color: C.of(context).bg, size: 26),
           )
               .animate(
                 onPlay: (controller) => controller.repeat(reverse: true),
