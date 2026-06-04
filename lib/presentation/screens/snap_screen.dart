@@ -47,6 +47,7 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
   bool _isRecalculating = false;
   bool _hasEdits = false;
   String? _error;
+  int _snapMode = 0; // 0=Capture, 1=Scan, 2=Manual
   final _notesController = TextEditingController();
   final _scanLimitService = ScanLimitService();
 
@@ -1669,6 +1670,64 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
     ];
   }
 
+  void _openBarcodeScanner() {
+    Navigator.of(context).push<String>(
+      MaterialPageRoute(builder: (_) => const BarcodeScreen()),
+    ).then((barcode) {
+      if (barcode != null && mounted) {
+        _handleBarcode(barcode);
+      }
+    });
+  }
+
+  Widget _modeTab(int index, IconData icon, String label) {
+    final isSelected = _snapMode == index;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          HapticFeedback.lightImpact();
+          setState(() => _snapMode = index);
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? AppColors.accentGreen.withValues(alpha: 0.15)
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: isSelected
+                  ? AppColors.accentGreen.withValues(alpha: 0.3)
+                  : Colors.transparent,
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon,
+                  size: 16,
+                  color: isSelected
+                      ? AppColors.accentGreen
+                      : C.of(context).text30),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                  color: isSelected
+                      ? AppColors.accentGreen
+                      : C.of(context).text30,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   // ── Build ─────────────────────────────────────────────────────────────
 
   @override
@@ -1678,6 +1737,31 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
       body: SafeArea(
         child: Column(
           children: [
+            // Mode toggle (only when used as tab)
+            if (widget.initialSource == null &&
+                widget.initialBarcode == null &&
+                !widget.initialManual &&
+                _imageFile == null &&
+                _analyzedItems.isEmpty)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: C.of(context).card,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: C.of(context).glassBorder),
+                  ),
+                  child: Row(
+                    children: [
+                      _modeTab(0, Icons.camera_alt_rounded, 'Capture'),
+                      _modeTab(1, Icons.qr_code_scanner, 'Scan'),
+                      _modeTab(2, Icons.edit_note, 'Manual'),
+                    ],
+                  ),
+                ),
+              ),
+
             // Image preview area
             Expanded(
               child: _imageFile != null
@@ -1865,8 +1949,12 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
                                 color: AppColors.accentGreen
                                     .withValues(alpha: 0.08),
                               ),
-                              child: const Icon(
-                                Icons.camera_alt_rounded,
+                              child: Icon(
+                                _snapMode == 0
+                                    ? Icons.camera_alt_rounded
+                                    : _snapMode == 1
+                                        ? Icons.qr_code_scanner
+                                        : Icons.edit_note,
                                 size: 56,
                                 color: AppColors.accentGreen,
                               ),
@@ -1881,7 +1969,11 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
                                 ),
                             const SizedBox(height: 24),
                             Text(
-                              'Snap your meal',
+                              _snapMode == 0
+                                  ? 'Snap your meal'
+                                  : _snapMode == 1
+                                      ? 'Scan a barcode'
+                                      : 'Add manually',
                               style: TextStyle(
                                 fontSize: 22,
                                 fontWeight: FontWeight.w700,
@@ -1890,7 +1982,11 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              'AI will analyze the nutrition instantly',
+                              _snapMode == 0
+                                  ? 'AI will analyze the nutrition instantly'
+                                  : _snapMode == 1
+                                      ? 'Scan packaged food for nutrition info'
+                                      : 'Enter food items and portions manually',
                               style: TextStyle(
                                 color: C.of(context).text30,
                                 fontSize: 14,
@@ -1948,46 +2044,67 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
                 ),
               ).animate().fadeIn(duration: 300.ms).shake(hz: 2, offset: const Offset(2, 0)),
 
-            // Action buttons: Gallery + Camera
+            // Action buttons based on mode
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: SizedBox(
-                      height: 56,
-                      child: OutlinedButton.icon(
-                        onPressed: _isAnalyzing
-                            ? null
-                            : () => _pickImage(ImageSource.gallery),
-                        icon: const Icon(Icons.photo_library_outlined),
-                        label: const Text('Gallery'),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: C.of(context).text70,
-                          side: BorderSide(color: C.of(context).glassBorder),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
+              child: _snapMode == 0
+                  ? Row(
+                      children: [
+                        Expanded(
+                          child: SizedBox(
+                            height: 56,
+                            child: OutlinedButton.icon(
+                              onPressed: _isAnalyzing
+                                  ? null
+                                  : () => _pickImage(ImageSource.gallery),
+                              icon: const Icon(Icons.photo_library_outlined),
+                              label: const Text('Gallery'),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: C.of(context).text70,
+                                side: BorderSide(
+                                    color: C.of(context).glassBorder),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                              ),
+                            ),
                           ),
                         ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    flex: 2,
-                    child: SizedBox(
-                      height: 56,
-                      child: ElevatedButton.icon(
-                        onPressed: _isAnalyzing
-                            ? null
-                            : () => _pickImage(ImageSource.camera),
-                        icon: const Icon(Icons.camera_alt_rounded),
-                        label: const Text('Take Photo'),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          flex: 2,
+                          child: SizedBox(
+                            height: 56,
+                            child: ElevatedButton.icon(
+                              onPressed: _isAnalyzing
+                                  ? null
+                                  : () => _pickImage(ImageSource.camera),
+                              icon: const Icon(Icons.camera_alt_rounded),
+                              label: const Text('Take Photo'),
+                            ),
+                          ),
+                        ),
+                      ],
+                    )
+                  : _snapMode == 1
+                      ? SizedBox(
+                          width: double.infinity,
+                          height: 56,
+                          child: ElevatedButton.icon(
+                            onPressed: _isAnalyzing ? null : _openBarcodeScanner,
+                            icon: const Icon(Icons.qr_code_scanner),
+                            label: const Text('Open Scanner'),
+                          ),
+                        )
+                      : SizedBox(
+                          width: double.infinity,
+                          height: 56,
+                          child: ElevatedButton.icon(
+                            onPressed: _isAnalyzing ? null : _manualEntry,
+                            icon: const Icon(Icons.edit_note),
+                            label: const Text('Add Items Manually'),
+                          ),
+                        ),
             ),
 
             // Show results button
