@@ -54,12 +54,19 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
   @override
   void initState() {
     super.initState();
+    if (widget.initialSource != null) {
+      _snapMode = 0;
+    } else if (widget.initialBarcode != null) {
+      _snapMode = 1;
+    } else if (widget.initialManual) {
+      _snapMode = 2;
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (widget.initialSource != null) {
         _pickImage(widget.initialSource!);
       } else if (widget.initialBarcode != null) {
         _handleBarcode(widget.initialBarcode!);
-      } else if (widget.initialManual == true) {
+      } else if (widget.initialManual) {
         _manualEntry();
       }
     });

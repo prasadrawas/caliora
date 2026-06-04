@@ -25,14 +25,21 @@ class HomeShell extends StatefulWidget {
 class _HomeShellState extends State<HomeShell> {
   int _currentIndex = 0;
   bool _showTooltips = false;
+  // Pending snap action from FAB
+  ImageSource? _pendingSource;
   String? _pendingBarcode;
+  bool _pendingManual = false;
+  int _snapKey = 0;
 
   List<Widget> get _screens => [
     const HomeScreen(),
     const DiaryScreen(),
-    _pendingBarcode != null
-        ? SnapScreen(key: ValueKey(_pendingBarcode), initialBarcode: _pendingBarcode)
-        : const SnapScreen(),
+    SnapScreen(
+      key: ValueKey(_snapKey),
+      initialSource: _pendingSource,
+      initialBarcode: _pendingBarcode,
+      initialManual: _pendingManual,
+    ),
     const ProgressScreen(),
     const SettingsScreen(),
   ];
@@ -201,12 +208,18 @@ class _HomeShellState extends State<HomeShell> {
     );
   }
 
+  void _switchToSnap({ImageSource? source, String? barcode, bool manual = false}) {
+    setState(() {
+      _pendingSource = source;
+      _pendingBarcode = barcode;
+      _pendingManual = manual;
+      _snapKey++;
+      _currentIndex = 2;
+    });
+  }
+
   void _openSnap(ImageSource source) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => SnapScreen(initialSource: source),
-      ),
-    );
+    _switchToSnap(source: source);
   }
 
   void _openBarcode() {
@@ -214,20 +227,13 @@ class _HomeShellState extends State<HomeShell> {
       MaterialPageRoute(builder: (_) => const BarcodeScreen()),
     ).then((barcode) {
       if (barcode != null && mounted) {
-        setState(() {
-          _pendingBarcode = barcode;
-          _currentIndex = 2;
-        });
+        _switchToSnap(barcode: barcode);
       }
     });
   }
 
   void _openManual() {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => const SnapScreen(initialManual: true),
-      ),
-    );
+    _switchToSnap(manual: true);
   }
 
   @override
@@ -262,7 +268,11 @@ class _HomeShellState extends State<HomeShell> {
           bottomNavigationBar: AnimatedBottomNav(
             currentIndex: _currentIndex,
             onTap: (index) => setState(() {
-              if (index != 2) _pendingBarcode = null;
+              if (index != 2) {
+                _pendingSource = null;
+                _pendingBarcode = null;
+                _pendingManual = false;
+              }
               _currentIndex = index;
             }),
           ),
