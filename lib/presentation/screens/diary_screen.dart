@@ -253,7 +253,9 @@ class _DiaryScreenState extends ConsumerState<DiaryScreen> {
                       fontSize: 14, fontWeight: FontWeight.w600, color: C.of(context).text54)),
                     const SizedBox(height: 8),
                     if (meal.items.isNotEmpty)
-                      ...meal.items.map((item) => Container(
+                      ...meal.items.map((item) => SizedBox(
+                        width: double.infinity,
+                        child: Container(
                         margin: const EdgeInsets.only(bottom: 8),
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                         decoration: BoxDecoration(
@@ -275,7 +277,7 @@ class _DiaryScreenState extends ConsumerState<DiaryScreen> {
                               style: TextStyle(fontSize: 11, color: C.of(context).text54)),
                           ],
                         ),
-                      ))
+                      )))
                     else
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
