@@ -144,7 +144,14 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
       _nameController.text = user!.displayName!;
     }
 
-    return Scaffold(
+    return PopScope(
+      canPop: _currentPage == 0,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop && _currentPage > 0) {
+          _previousPage();
+        }
+      },
+      child: Scaffold(
       backgroundColor: C.of(context).bg,
       appBar: AppBar(
         title: const Text('Setup Your Profile'),
@@ -224,6 +231,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
           ],
         ),
       ),
+    ),
     );
   }
 
