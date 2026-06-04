@@ -1045,7 +1045,7 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
                                     ? null
                                     : () async {
                                         await _reAnalyse(setSheetState,
-                                            forceAll: !_hasBeenAnalysed);
+                                            forceAll: true);
                                       },
                                 icon: _isRecalculating
                                     ? const SizedBox(
