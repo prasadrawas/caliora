@@ -22,6 +22,9 @@
 - Rejected whitespace-only passwords
 - Splash screen no longer hangs on Firestore error
 - Forgot password validates email format before sending
+- Fixed diary delete/undo using wrong date for recalculation
+- Added error handling to undo callback (shows error on failure instead of silent loss)
+- Meals with non-standard meal types no longer silently hidden in diary
 - Pull-to-refresh now awaits actual data instead of fake delay
 - Prevented confetti stacking on rapid meal logging
 
