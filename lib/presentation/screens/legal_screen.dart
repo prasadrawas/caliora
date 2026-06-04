@@ -16,6 +16,7 @@ class LegalScreen extends StatefulWidget {
 class _LegalScreenState extends State<LegalScreen> {
   late final WebViewController _controller;
   bool _isLoading = true;
+  bool _hasError = false;
 
   @override
   void initState() {
@@ -26,8 +27,28 @@ class _LegalScreenState extends State<LegalScreen> {
         onPageFinished: (_) {
           if (mounted) setState(() => _isLoading = false);
         },
+        onWebResourceError: (_) {
+          if (mounted) setState(() {
+            _isLoading = false;
+            _hasError = true;
+          });
+        },
+        onHttpError: (_) {
+          if (mounted) setState(() {
+            _isLoading = false;
+            _hasError = true;
+          });
+        },
       ))
       ..loadRequest(Uri.parse(widget.url));
+  }
+
+  void _retry() {
+    setState(() {
+      _isLoading = true;
+      _hasError = false;
+    });
+    _controller.loadRequest(Uri.parse(widget.url));
   }
 
   @override
@@ -42,6 +63,30 @@ class _LegalScreenState extends State<LegalScreen> {
             Center(
               child: CircularProgressIndicator(
                 color: AppColors.accentGreen,
+              ),
+            ),
+          if (_hasError)
+            Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.wifi_off, color: C.of(context).text30, size: 48),
+                  const SizedBox(height: 16),
+                  Text('Failed to load page',
+                      style: TextStyle(
+                          color: C.of(context).text, fontSize: 16,
+                          fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 8),
+                  Text('Check your internet connection',
+                      style: TextStyle(
+                          color: C.of(context).text54, fontSize: 13)),
+                  const SizedBox(height: 20),
+                  ElevatedButton.icon(
+                    onPressed: _retry,
+                    icon: const Icon(Icons.refresh, size: 18),
+                    label: const Text('Retry'),
+                  ),
+                ],
               ),
             ),
         ],
