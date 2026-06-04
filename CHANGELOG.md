@@ -6,6 +6,7 @@
 - Fixed Google Sign-In failing in release builds (added Play App Signing SHA-1)
 - Fixed camera and barcode scanner crash in release mode (ProGuard rules for CameraX/ML Kit)
 - Fixed oval-shaped loading spinner on login button
+- Removed scan limit from barcode lookup (uses free Open Food Facts API, not Gemini)
 
 ### New Features
 - BMI & BMR display card on home screen with color-coded BMI category
