@@ -1064,39 +1064,36 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
                             ),
                             const SizedBox(height: 10),
                           ],
-                          SizedBox(
-                            width: double.infinity,
-                            height: 56,
-                            child: ElevatedButton(
-                              onPressed: _isSaving
-                                  ? null
-                                  : () => _logMeal(setSheetState),
-                              child: _isSaving
-                                  ? SizedBox(
-                                      width: 24,
-                                      height: 24,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2.5,
-                                        color: C.of(context).bg,
-                                      ),
-                                    )
-                                  : const Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Icon(Icons.check_circle_outline,
-                                            size: 20),
-                                        SizedBox(width: 8),
-                                        Text('Log Meal'),
-                                      ],
-                                    ),
-                            ),
-                          ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 72),
                         ],
                       ),
                     ),
                   ),
+
+                  // Pinned Log Meal button at bottom
+                  if (!_isSaving && !_isRecalculating)
+                    Positioned(
+                      left: 24,
+                      right: 24,
+                      bottom: 16,
+                      child: SizedBox(
+                        width: double.infinity,
+                        height: 56,
+                        child: ElevatedButton(
+                          onPressed: _analyzedItems.isEmpty
+                              ? null
+                              : () => _logMeal(setSheetState),
+                          child: const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.check_circle_outline, size: 20),
+                              SizedBox(width: 8),
+                              Text('Log Meal'),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
 
                   // Blocking loading overlay
                   if (_isSaving || _isRecalculating)
