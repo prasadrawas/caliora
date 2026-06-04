@@ -16,7 +16,7 @@ class BarcodeService {
       final response = await _dio.get(
         url,
         options: Options(headers: {
-          'User-Agent': 'BiteBloom/1.0 (Flutter; contact@bitebloom.app)',
+          'User-Agent': 'BiteBloom/1.0 (Flutter; dev.prasadrawas@gmail.com)',
         }),
       );
       stopwatch.stop();
@@ -72,6 +72,10 @@ class BarcodeService {
       log.i('[Barcode] MealEntry created: ${meal.mealName} (${meal.calories} kcal)');
       return meal;
     } on DioException catch (e) {
+      if (e.response?.statusCode == 404) {
+        log.w('[Barcode] Product not found (404) for barcode: $barcode');
+        return null;
+      }
       log.e('[Barcode] DioException: ${e.type}');
       log.e('[Barcode] Status: ${e.response?.statusCode}');
       log.e('[Barcode] Message: ${e.message}');
