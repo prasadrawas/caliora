@@ -126,355 +126,199 @@ class _DiaryScreenState extends ConsumerState<DiaryScreen> {
   }
 
   void _editMeal(MealEntry meal) {
-    log.i('[Diary] Editing meal: ${meal.mealName} (${meal.id})');
+    log.i('[Diary] Viewing meal: ${meal.mealName} (${meal.id})');
 
-    final nameCtrl = TextEditingController(text: meal.mealName);
-    final caloriesCtrl = TextEditingController(text: '${meal.calories}');
-    final proteinCtrl = TextEditingController(text: meal.protein.toStringAsFixed(1));
-    final carbsCtrl = TextEditingController(text: meal.carbs.toStringAsFixed(1));
-    final fatCtrl = TextEditingController(text: meal.fat.toStringAsFixed(1));
-    final fiberCtrl = TextEditingController(text: meal.fiber.toStringAsFixed(1));
-    final sugarCtrl = TextEditingController(text: meal.sugar.toStringAsFixed(1));
-    final satFatCtrl = TextEditingController(text: meal.saturatedFat.toStringAsFixed(1));
-    final sodiumCtrl = TextEditingController(text: meal.sodium.toStringAsFixed(1));
-    final potassiumCtrl = TextEditingController(text: meal.potassium.toStringAsFixed(1));
-    final calciumCtrl = TextEditingController(text: meal.calcium.toStringAsFixed(1));
-    final ironCtrl = TextEditingController(text: meal.iron.toStringAsFixed(1));
-    final magnesiumCtrl = TextEditingController(text: meal.magnesium.toStringAsFixed(1));
-    final vitACtrl = TextEditingController(text: meal.vitaminA.toStringAsFixed(1));
-    final vitCCtrl = TextEditingController(text: meal.vitaminC.toStringAsFixed(1));
-    final vitDCtrl = TextEditingController(text: meal.vitaminD.toStringAsFixed(1));
-    final vitB12Ctrl = TextEditingController(text: meal.vitaminB12.toStringAsFixed(1));
-    final servingCtrl = TextEditingController(text: meal.servingSize);
+    int score = 70;
+    final proteinPct = meal.calories > 0 ? (meal.protein * 4 / meal.calories * 100) : 0;
+    if (proteinPct >= 20 && proteinPct <= 35) score += 10;
+    if (proteinPct < 10) score -= 15;
+    if (meal.fiber >= 5) score += 10;
+    if (meal.fiber < 2) score -= 10;
+    if (meal.sugar <= 15) score += 5;
+    if (meal.sugar > 30) score -= 15;
+    if (meal.saturatedFat <= 7) score += 5;
+    if (meal.saturatedFat > 15) score -= 15;
+    if (meal.sodium <= 800) score += 5;
+    if (meal.sodium > 1500) score -= 10;
+    if (meal.calories >= 300 && meal.calories <= 700) score += 5;
+    if (meal.calories > 1000) score -= 10;
+    score = score.clamp(0, 100);
 
-    bool isSaving = false;
+    final scoreLabel = score >= 80 ? 'Excellent' : score >= 60 ? 'Good' : score >= 40 ? 'Fair' : 'Poor';
+    final scoreColor = score >= 80 ? AppColors.accentGreen : score >= 60 ? AppColors.carbs : score >= 40 ? AppColors.warning : AppColors.error;
 
-    double parsePositive(String text) {
-      final val = double.tryParse(text) ?? 0;
-      return val < 0 ? 0 : val;
-    }
+    final microPills = <MapEntry<String, String>>[
+      if (meal.fiber > 0) MapEntry('Fiber', '${meal.fiber.toStringAsFixed(1)}g'),
+      if (meal.sugar > 0) MapEntry('Sugar', '${meal.sugar.toStringAsFixed(1)}g'),
+      if (meal.saturatedFat > 0) MapEntry('Sat Fat', '${meal.saturatedFat.toStringAsFixed(1)}g'),
+      if (meal.sodium > 0) MapEntry('Sodium', '${meal.sodium.toStringAsFixed(1)}mg'),
+      if (meal.potassium > 0) MapEntry('Potassium', '${meal.potassium.toStringAsFixed(1)}mg'),
+      if (meal.calcium > 0) MapEntry('Calcium', '${meal.calcium.toStringAsFixed(1)}mg'),
+      if (meal.iron > 0) MapEntry('Iron', '${meal.iron.toStringAsFixed(1)}mg'),
+      if (meal.magnesium > 0) MapEntry('Magnesium', '${meal.magnesium.toStringAsFixed(1)}mg'),
+      if (meal.vitaminA > 0) MapEntry('Vit A', '${meal.vitaminA.toStringAsFixed(1)}mcg'),
+      if (meal.vitaminC > 0) MapEntry('Vit C', '${meal.vitaminC.toStringAsFixed(1)}mg'),
+      if (meal.vitaminD > 0) MapEntry('Vit D', '${meal.vitaminD.toStringAsFixed(1)}mcg'),
+      if (meal.vitaminB12 > 0) MapEntry('Vit B12', '${meal.vitaminB12.toStringAsFixed(1)}mcg'),
+    ];
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setSheetState) {
-            return DraggableScrollableSheet(
-              initialChildSize: 0.8,
-              minChildSize: 0.5,
-              maxChildSize: 0.95,
-              builder: (context, scrollController) {
-                return Stack(
+        return DraggableScrollableSheet(
+          initialChildSize: 0.8,
+          minChildSize: 0.5,
+          maxChildSize: 0.95,
+          builder: (context, scrollController) {
+            return Container(
+              decoration: BoxDecoration(
+                color: C.of(context).bg,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              child: SingleChildScrollView(
+                controller: scrollController,
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      decoration: BoxDecoration(
-                        color: C.of(context).bg,
-                        borderRadius:
-                            BorderRadius.vertical(top: Radius.circular(24)),
-                      ),
-                      child: SingleChildScrollView(
-                        controller: scrollController,
-                        padding: const EdgeInsets.all(24),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Center(
-                              child: Container(
-                                width: 40,
-                                height: 4,
-                                decoration: BoxDecoration(
-                                  color: C.of(context).text30,
-                                  borderRadius: BorderRadius.circular(2),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 20),
-                            Row(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(10),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.carbs
-                                        .withValues(alpha: 0.1),
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: const Icon(Icons.edit,
-                                      color: AppColors.carbs, size: 22),
-                                ),
-                                const SizedBox(width: 12),
-                                Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Edit Meal',
-                                      style: TextStyle(
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.w700,
-                                        color: C.of(context).text,
-                                      ),
-                                    ),
-                                    Text(
-                                      'Update nutrition details',
-                                      style: TextStyle(
-                                          fontSize: 12,
-                                          color: C.of(context).text30),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 20),
-                            _editField('Meal Name', nameCtrl,
-                                Icons.restaurant),
-                            _editField('Serving Size', servingCtrl,
-                                Icons.straighten),
-                            _editField('Calories', caloriesCtrl,
-                                Icons.local_fire_department,
-                                isNumber: true),
-                            const SizedBox(height: 8),
-                            _editSectionLabel('Macronutrients'),
-                            _editField('Protein (g)', proteinCtrl,
-                                Icons.fitness_center,
-                                isNumber: true),
-                            _editField(
-                                'Carbs (g)', carbsCtrl, Icons.grain,
-                                isNumber: true),
-                            _editField(
-                                'Fat (g)', fatCtrl, Icons.opacity,
-                                isNumber: true),
-                            _editField(
-                                'Fiber (g)', fiberCtrl, Icons.eco,
-                                isNumber: true),
-                            _editField('Sugar (g)', sugarCtrl,
-                                Icons.cookie_outlined,
-                                isNumber: true),
-                            _editField('Saturated Fat (g)', satFatCtrl,
-                                Icons.water_drop_outlined,
-                                isNumber: true),
-                            const SizedBox(height: 8),
-                            _editSectionLabel('Minerals'),
-                            _editField('Sodium (mg)', sodiumCtrl,
-                                Icons.science_outlined,
-                                isNumber: true),
-                            _editField('Potassium (mg)', potassiumCtrl,
-                                Icons.bolt_outlined,
-                                isNumber: true),
-                            _editField('Calcium (mg)', calciumCtrl,
-                                Icons.shield_outlined,
-                                isNumber: true),
-                            _editField('Iron (mg)', ironCtrl,
-                                Icons.bloodtype_outlined,
-                                isNumber: true),
-                            _editField('Magnesium (mg)', magnesiumCtrl,
-                                Icons.spa_outlined,
-                                isNumber: true),
-                            const SizedBox(height: 8),
-                            _editSectionLabel('Vitamins'),
-                            _editField('Vitamin A (mcg)', vitACtrl,
-                                Icons.visibility_outlined,
-                                isNumber: true),
-                            _editField('Vitamin C (mg)', vitCCtrl,
-                                Icons.local_pharmacy_outlined,
-                                isNumber: true),
-                            _editField('Vitamin D (mcg)', vitDCtrl,
-                                Icons.wb_sunny_outlined,
-                                isNumber: true),
-                            _editField('Vitamin B12 (mcg)', vitB12Ctrl,
-                                Icons.psychology_outlined,
-                                isNumber: true),
-                            const SizedBox(height: 24),
-                            SizedBox(
-                              width: double.infinity,
-                              height: 56,
-                              child: ElevatedButton(
-                                onPressed: isSaving
-                                    ? null
-                                    : () async {
-                                        if (nameCtrl.text.trim().isEmpty) return;
-
-                                        setSheetState(
-                                            () => isSaving = true);
-
-                                        try {
-                                          final user = ref.read(
-                                              currentUserProvider);
-                                          if (user == null) return;
-
-                                          final updates = {
-                                            'mealName':
-                                                nameCtrl.text.trim(),
-                                            'calories': parsePositive(
-                                                    caloriesCtrl.text)
-                                                .toInt(),
-                                            'protein': parsePositive(
-                                                proteinCtrl.text),
-                                            'carbs': parsePositive(
-                                                carbsCtrl.text),
-                                            'fat': parsePositive(
-                                                fatCtrl.text),
-                                            'fiber': parsePositive(
-                                                fiberCtrl.text),
-                                            'sugar': parsePositive(
-                                                sugarCtrl.text),
-                                            'saturatedFat':
-                                                parsePositive(
-                                                    satFatCtrl.text),
-                                            'sodium': parsePositive(
-                                                sodiumCtrl.text),
-                                            'potassium': parsePositive(
-                                                potassiumCtrl.text),
-                                            'calcium': parsePositive(
-                                                calciumCtrl.text),
-                                            'iron': parsePositive(
-                                                ironCtrl.text),
-                                            'magnesium': parsePositive(
-                                                magnesiumCtrl.text),
-                                            'vitaminA': parsePositive(
-                                                vitACtrl.text),
-                                            'vitaminC': parsePositive(
-                                                vitCCtrl.text),
-                                            'vitaminD': parsePositive(
-                                                vitDCtrl.text),
-                                            'vitaminB12': parsePositive(
-                                                vitB12Ctrl.text),
-                                            'servingSize':
-                                                servingCtrl.text,
-                                          };
-
-                                          final firestoreService = ref
-                                              .read(
-                                                  firestoreServiceProvider);
-                                          await firestoreService
-                                              .updateMeal(user.uid,
-                                                  meal.id, updates);
-
-                                          final profile =
-                                              await firestoreService
-                                                  .getProfile(user.uid);
-                                          final selectedDate = ref.read(
-                                              selectedDateProvider);
-                                          await firestoreService
-                                              .recalculateDailySummary(
-                                            user.uid,
-                                            selectedDate,
-                                            profile?.dailyCalorieTarget ??
-                                                AppConfig.defaultCalorieTarget,
-                                          );
-
-                                          log.i(
-                                              '[Diary] Meal updated: ${nameCtrl.text}');
-
-                                          if (!context.mounted) return;
-                                          HapticFeedback.mediumImpact();
-                                          Navigator.pop(context);
-                                          ScaffoldMessenger.of(this
-                                                  .context)
-                                              .showSnackBar(
-                                            SnackBar(
-                                              content: const Text(
-                                                  'Meal updated'),
-                                              backgroundColor:
-                                                  AppColors.accentGreen,
-                                              behavior: SnackBarBehavior
-                                                  .floating,
-                                              duration:
-                                                  const Duration(
-                                                      seconds: 2),
-                                              shape:
-                                                  RoundedRectangleBorder(
-                                                borderRadius:
-                                                    BorderRadius
-                                                        .circular(12),
-                                              ),
-                                            ),
-                                          );
-                                        } catch (e) {
-                                          log.e(
-                                              '[Diary] Edit failed: $e');
-                                          if (!context.mounted) return;
-                                          ScaffoldMessenger.of(context)
-                                              .showSnackBar(
-                                            SnackBar(
-                                              content: Text(
-                                                  'Error: $e'),
-                                              backgroundColor:
-                                                  AppColors.error,
-                                              behavior: SnackBarBehavior
-                                                  .floating,
-                                              shape:
-                                                  RoundedRectangleBorder(
-                                                borderRadius:
-                                                    BorderRadius
-                                                        .circular(12),
-                                              ),
-                                            ),
-                                          );
-                                        } finally {
-                                          if (context.mounted) {
-                                            setSheetState(
-                                                () => isSaving = false);
-                                          }
-                                        }
-                                      },
-                                child: isSaving
-                                    ? SizedBox(
-                                        width: 24,
-                                        height: 24,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2.5,
-                                          color: C.of(context).bg,
-                                        ),
-                                      )
-                                    : const Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          Icon(Icons.check_circle_outline,
-                                              size: 20),
-                                          SizedBox(width: 8),
-                                          Text('Save Changes'),
-                                        ],
-                                      ),
-                              ),
-                            ),
-                          ],
+                    Center(
+                      child: Container(
+                        width: 40, height: 4,
+                        decoration: BoxDecoration(
+                          color: C.of(context).text30,
+                          borderRadius: BorderRadius.circular(2),
                         ),
                       ),
                     ),
-                    if (isSaving)
-                      Container(
-                        decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.6),
-                          borderRadius: const BorderRadius.vertical(
-                              top: Radius.circular(24)),
-                        ),
-                        child: Center(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
+                    const SizedBox(height: 16),
+                    // Meal Score
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: C.of(context).card,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: C.of(context).glassBorder),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 52, height: 52,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(color: scoreColor, width: 3),
+                            ),
+                            child: Center(
+                              child: Text('$score', style: TextStyle(
+                                color: scoreColor, fontSize: 18, fontWeight: FontWeight.w800)),
+                            ),
+                          ),
+                          const SizedBox(width: 14),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              CircularProgressIndicator(
-                                color: AppColors.accentGreen,
-                                strokeWidth: 3,
-                              ),
-                              SizedBox(height: 16),
-                              Text(
-                                'Saving changes...',
-                                style: TextStyle(
-                                  color: C.of(context).text,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
+                              Text('Meal Score', style: TextStyle(
+                                color: C.of(context).text54, fontSize: 12)),
+                              Text(scoreLabel, style: TextStyle(
+                                color: scoreColor, fontSize: 18, fontWeight: FontWeight.w700)),
                             ],
                           ),
-                        ),
+                        ],
                       ),
+                    ),
+                    const SizedBox(height: 16),
+                    // Meal Name
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: C.of(context).card,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: C.of(context).glassBorder),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.restaurant, color: AppColors.accentGreen, size: 22),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(meal.mealName, style: TextStyle(
+                              fontSize: 20, fontWeight: FontWeight.w700, color: C.of(context).text)),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    // Item Card
+                    Text('Items', style: TextStyle(
+                      fontSize: 14, fontWeight: FontWeight.w600, color: C.of(context).text54)),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: C.of(context).card,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: C.of(context).glassBorder),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(meal.mealName, style: TextStyle(
+                            fontSize: 14, fontWeight: FontWeight.w700, color: C.of(context).text)),
+                          const SizedBox(height: 2),
+                          Text(meal.servingSize, style: const TextStyle(
+                            fontSize: 12, color: AppColors.accentGreen, fontWeight: FontWeight.w500)),
+                          const SizedBox(height: 4),
+                          Text(
+                            '${meal.calories} kcal  •  P ${meal.protein.toStringAsFixed(1)}g  •  C ${meal.carbs.toStringAsFixed(1)}g  •  F ${meal.fat.toStringAsFixed(1)}g',
+                            style: TextStyle(fontSize: 11, color: C.of(context).text54)),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    // Macro Summary
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: C.of(context).card,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: C.of(context).glassBorder),
+                      ),
+                      child: Row(
+                        children: [
+                          _macroCol('${meal.calories}', 'kcal', AppColors.accentGreen),
+                          _macroDivider(),
+                          _macroCol('${meal.protein.toStringAsFixed(1)}g', 'Protein', AppColors.protein),
+                          _macroDivider(),
+                          _macroCol('${meal.carbs.toStringAsFixed(1)}g', 'Carbs', AppColors.carbs),
+                          _macroDivider(),
+                          _macroCol('${meal.fat.toStringAsFixed(1)}g', 'Fat', AppColors.fat),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    // Vitamins & Minerals
+                    if (microPills.isNotEmpty) ...[
+                      Text('Vitamins & Minerals', style: TextStyle(
+                        fontSize: 14, fontWeight: FontWeight.w600, color: C.of(context).text54)),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 6, runSpacing: 6,
+                        children: microPills.map((e) => Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: C.of(context).card,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: C.of(context).glassBorder),
+                          ),
+                          child: Text('${e.key} ${e.value}', style: TextStyle(
+                            fontSize: 12, color: C.of(context).text70, fontWeight: FontWeight.w500)),
+                        )).toList(),
+                      ),
+                    ],
+                    const SizedBox(height: 24),
                   ],
-                );
-              },
+                ),
+              ),
             );
           },
         );
@@ -482,36 +326,24 @@ class _DiaryScreenState extends ConsumerState<DiaryScreen> {
     );
   }
 
-  Widget _editField(String label, TextEditingController controller,
-      IconData icon,
-      {bool isNumber = false}) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: TextFormField(
-        controller: controller,
-        keyboardType: isNumber ? TextInputType.number : TextInputType.text,
-        style: TextStyle(color: C.of(context).text),
-        decoration: InputDecoration(
-          labelText: label,
-          prefixIcon: Icon(icon, color: C.of(context).text54, size: 20),
-        ),
+  Widget _macroCol(String value, String label, Color color) {
+    return Expanded(
+      child: Column(
+        children: [
+          Text(value, style: TextStyle(
+            color: color, fontSize: 16, fontWeight: FontWeight.w700)),
+          const SizedBox(height: 2),
+          Text(label, style: TextStyle(
+            color: C.of(context).text30, fontSize: 11, fontWeight: FontWeight.w500)),
+        ],
       ),
     );
   }
 
-  Widget _editSectionLabel(String label) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 13,
-          fontWeight: FontWeight.w600,
-          color: C.of(context).text54,
-        ),
-      ),
-    );
+  Widget _macroDivider() {
+    return Container(width: 1, height: 30, color: C.of(context).glassBorder);
   }
+
 
   @override
   Widget build(BuildContext context) {
