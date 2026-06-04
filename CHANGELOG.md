@@ -8,6 +8,8 @@
 - Fixed oval-shaped loading spinner on login button
 - Removed scan limit from barcode lookup (uses free Open Food Facts API, not Gemini)
 - Fixed delete snackbar text not visible and not auto-dismissing
+- Disabled Log Meal button when AI detects no food items
+- Pinned Log Meal button at bottom of result sheet (no more scrolling to find it)
 
 ### New Features
 - BMI & BMR display card on home screen with color-coded BMI category
