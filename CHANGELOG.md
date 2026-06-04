@@ -14,6 +14,8 @@
 - Capture/Scan/Manual mode toggle on the Snap tab
 - Scanning UI overlay during AI meal analysis with animated scan line and corner brackets
 - Barcode 404 handled gracefully (product not found instead of error)
+- Meal delete button with confirmation dialog on diary screen
+- Double-tap back to exit with navigate-to-home-first behavior
 - Keyboard now dismisses on submit across all screens
 
 ### Improvements
