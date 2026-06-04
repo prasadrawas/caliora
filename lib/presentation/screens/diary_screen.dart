@@ -103,7 +103,8 @@ class _DiaryScreenState extends ConsumerState<DiaryScreen> {
     );
 
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.showSnackBar(
       SnackBar(
         content: Text(
           '${meal.mealName} deleted',
@@ -111,8 +112,6 @@ class _DiaryScreenState extends ConsumerState<DiaryScreen> {
         ),
         backgroundColor: Colors.grey[900],
         behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 4),
-        dismissDirection: DismissDirection.horizontal,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         action: SnackBarAction(
           label: 'Undo',
@@ -128,6 +127,9 @@ class _DiaryScreenState extends ConsumerState<DiaryScreen> {
         ),
       ),
     );
+    Future.delayed(const Duration(seconds: 4), () {
+      messenger.hideCurrentSnackBar();
+    });
   }
 
   void _editMeal(MealEntry meal) {
