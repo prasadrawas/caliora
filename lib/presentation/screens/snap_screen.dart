@@ -1130,7 +1130,9 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
                             Text(
                               _isSaving
                                   ? 'Logging your meal...'
-                                  : 'Re-analysing meal...',
+                                  : _hasBeenAnalysed
+                                      ? 'Re-analysing meal...'
+                                      : 'Analysing with AI...',
                               style: TextStyle(
                                 color: C.of(context).text,
                                 fontSize: 16,
@@ -1470,7 +1472,9 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
         setState(() {
           _analyzedItems = result;
           _hasEdits = false;
+          _hasBeenAnalysed = true;
         });
+        setSheetState(() {});
         HapticFeedback.mediumImpact();
       }
     } catch (e) {
