@@ -49,6 +49,42 @@ class _DiaryScreenState extends ConsumerState<DiaryScreen> {
     super.dispose();
   }
 
+  Future<void> _confirmAndDeleteMeal(MealEntry meal) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: C.of(context).card,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text('Delete Meal',
+            style: TextStyle(
+                color: C.of(context).text, fontWeight: FontWeight.w700)),
+        content: Text(
+            'Are you sure you want to delete "${meal.mealName}"?',
+            style: TextStyle(color: C.of(context).text70, height: 1.5)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text('Cancel',
+                style: TextStyle(color: C.of(context).text30)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.error,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+    await _deleteMeal(meal);
+  }
+
   Future<void> _deleteMeal(MealEntry meal) async {
     final user = ref.read(currentUserProvider);
     if (user == null) return;
@@ -758,7 +794,7 @@ class _DiaryScreenState extends ConsumerState<DiaryScreen> {
                         (meal) => MealCard(
                           meal: meal,
                           onTap: () => _editMeal(meal),
-                          onDismissed: () => _deleteMeal(meal),
+                          onDelete: () => _confirmAndDeleteMeal(meal),
                         )
                             .animate()
                             .fadeIn(duration: 300.ms)

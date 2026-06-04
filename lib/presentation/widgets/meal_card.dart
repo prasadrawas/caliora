@@ -10,12 +10,14 @@ class MealCard extends StatelessWidget {
   final MealEntry meal;
   final VoidCallback? onTap;
   final VoidCallback? onDismissed;
+  final VoidCallback? onDelete;
 
   const MealCard({
     super.key,
     required this.meal,
     this.onTap,
     this.onDismissed,
+    this.onDelete,
   });
 
   @override
@@ -97,6 +99,24 @@ class MealCard extends StatelessWidget {
                     ),
                   ),
                 ),
+                if (onDelete != null) ...[
+                  const SizedBox(width: 8),
+                  GestureDetector(
+                    onTap: () {
+                      HapticFeedback.lightImpact();
+                      onDelete!();
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: AppColors.error.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(Icons.delete_outline,
+                          color: AppColors.error, size: 18),
+                    ),
+                  ),
+                ],
               ],
             ),
             const SizedBox(height: 10),
