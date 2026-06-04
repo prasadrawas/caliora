@@ -10,7 +10,10 @@ import '../models/analyzed_item.dart';
 
 class GeminiService {
   final String _apiKey;
-  final Dio _dio = Dio();
+  final Dio _dio = Dio(BaseOptions(
+    connectTimeout: const Duration(seconds: 10),
+    receiveTimeout: const Duration(seconds: 30),
+  ));
 
   GeminiService({required String apiKey}) : _apiKey = apiKey;
 
