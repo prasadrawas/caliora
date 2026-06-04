@@ -1752,6 +1752,7 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
             _isAnalyzing = false;
             _isManualMode = false;
             _hasBeenAnalysed = false;
+            _notesController.clear();
           });
         },
         child: AnimatedContainer(
