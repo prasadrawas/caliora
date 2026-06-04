@@ -31,6 +31,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
   }
 
   Future<void> _logWeight() async {
+    FocusScope.of(context).unfocus();
     final weight = double.tryParse(_weightController.text);
     if (weight == null || weight < 20 || weight > 300) {
       ScaffoldMessenger.of(context).showSnackBar(

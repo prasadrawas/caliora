@@ -79,6 +79,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
   }
 
   Future<void> _saveProfile() async {
+    FocusScope.of(context).unfocus();
     setState(() => _isSaving = true);
 
     try {

@@ -1469,6 +1469,7 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
   // ── Log Meal ──────────────────────────────────────────────────────────
 
   Future<void> _logMeal(StateSetter setSheetState) async {
+    FocusScope.of(context).unfocus();
     if (_mealName.trim().isEmpty && _analyzedItems.isNotEmpty) {
       _mealName = _analyzedItems.first.name;
     }
