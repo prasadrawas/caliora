@@ -231,7 +231,8 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                       v,
                       _selectedDietaryPreference,
                       (val) => setState(
-                          () => _selectedDietaryPreference = val)))
+                          () => _selectedDietaryPreference = val),
+                      expand: false))
                   .toList(),
             ),
             const SizedBox(height: 24),
@@ -305,10 +306,10 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
   }
 
   Widget _chip(
-      String label, String value, String selected, ValueChanged<String> onTap) {
+      String label, String value, String selected, ValueChanged<String> onTap,
+      {bool expand = true}) {
     final isSelected = selected == value;
-    return Expanded(
-      child: GestureDetector(
+    final child = GestureDetector(
         onTap: () {
           HapticFeedback.selectionClick();
           onTap(value);
@@ -341,8 +342,8 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
             ),
           ),
         ),
-      ),
     );
+    return expand ? Expanded(child: child) : child;
   }
 
   List<Widget> _buildActivityOptions() {
