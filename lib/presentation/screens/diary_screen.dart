@@ -91,20 +91,19 @@ class _DiaryScreenState extends ConsumerState<DiaryScreen> {
     if (user == null) return;
 
     final firestoreService = ref.read(firestoreServiceProvider);
+    final mealDate = meal.timestamp;
 
     await firestoreService.deleteMeal(user.uid, meal.id);
 
     final profile = await firestoreService.getProfile(user.uid);
-    final selectedDate = ref.read(selectedDateProvider);
     await firestoreService.recalculateDailySummary(
       user.uid,
-      selectedDate,
+      mealDate,
       profile?.dailyCalorieTarget ?? AppConfig.defaultCalorieTarget,
     );
 
     if (!mounted) return;
-    final messenger = ScaffoldMessenger.of(context);
-    messenger.showSnackBar(
+    ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
           '${meal.mealName} deleted',
@@ -112,24 +111,36 @@ class _DiaryScreenState extends ConsumerState<DiaryScreen> {
         ),
         backgroundColor: Colors.grey[900],
         behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 4),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         action: SnackBarAction(
           label: 'Undo',
           textColor: AppColors.accentGreen,
           onPressed: () async {
-            await firestoreService.addMeal(user.uid, meal);
-            await firestoreService.recalculateDailySummary(
-              user.uid,
-              selectedDate,
-              profile?.dailyCalorieTarget ?? AppConfig.defaultCalorieTarget,
-            );
+            try {
+              await firestoreService.addMeal(user.uid, meal);
+              await firestoreService.recalculateDailySummary(
+                user.uid,
+                mealDate,
+                profile?.dailyCalorieTarget ?? AppConfig.defaultCalorieTarget,
+              );
+            } catch (e) {
+              if (!mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: const Text('Failed to restore meal. Please try again.',
+                      style: TextStyle(color: Colors.white)),
+                  backgroundColor: AppColors.error,
+                  behavior: SnackBarBehavior.floating,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                ),
+              );
+            }
           },
         ),
       ),
     );
-    Future.delayed(const Duration(seconds: 4), () {
-      messenger.hideCurrentSnackBar();
-    });
   }
 
   void _editMeal(MealEntry meal) {
@@ -627,7 +638,12 @@ class _DiaryScreenState extends ConsumerState<DiaryScreen> {
                 grouped.putIfAbsent(meal.mealType, () => []).add(meal);
               }
 
-              final sections = ['breakfast', 'lunch', 'snack', 'dinner'];
+              final knownSections = ['breakfast', 'lunch', 'snack', 'dinner'];
+              // Include any unknown meal types so they're not silently hidden
+              final extraSections = grouped.keys
+                  .where((k) => !knownSections.contains(k))
+                  .toList();
+              final sections = [...knownSections, ...extraSections];
               final sectionIcons = {
                 'breakfast': Icons.wb_sunny_outlined,
                 'lunch': Icons.light_mode_outlined,
@@ -651,7 +667,7 @@ class _DiaryScreenState extends ConsumerState<DiaryScreen> {
                         child: Row(
                           children: [
                             Icon(
-                              sectionIcons[section],
+                              sectionIcons[section] ?? Icons.restaurant_outlined,
                               size: 16,
                               color: C.of(context).text54,
                             ),
