@@ -20,8 +20,12 @@
 - New users now go directly to profile setup after sign-up for a smoother flow
 - Added tappable Terms of Service and Privacy Policy links on login screen
 - Added "Created by Prasad Rawas" to splash and settings screens
+- FAB actions (Camera/Gallery/Barcode/Manual) now route through the Snap tab instead of pushing separate screens
+- Mode toggle always visible on Snap tab with correct mode pre-selected from FAB
+- Switching mode toggle clears previous state for a fresh start
 - Changed FAB icon from plus to camera
 - Hidden FAB on Snap screen to avoid redundancy
+- AppBar now shown on Snap tab
 - Fixed Expanded inside Wrap crash on profile edit screen
 
 ## 1.0.0 (2026-06-03)
