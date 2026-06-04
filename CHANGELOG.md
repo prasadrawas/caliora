@@ -10,6 +10,9 @@
 ### New Features
 - BMI & BMR display card on home screen with color-coded BMI category
 - BMI & BMR info screen — explains BMI categories, BMR formula, how calorie/macro targets are calculated
+- Capture/Scan/Manual mode toggle on the Snap tab
+- Scanning UI overlay during AI meal analysis with animated scan line and corner brackets
+- Barcode 404 handled gracefully (product not found instead of error)
 - Keyboard now dismisses on submit across all screens
 
 ### Improvements
@@ -17,6 +20,8 @@
 - New users now go directly to profile setup after sign-up for a smoother flow
 - Added tappable Terms of Service and Privacy Policy links on login screen
 - Added "Created by Prasad Rawas" to splash and settings screens
+- Changed FAB icon from plus to camera
+- Hidden FAB on Snap screen to avoid redundancy
 - Fixed Expanded inside Wrap crash on profile edit screen
 
 ## 1.0.0 (2026-06-03)

@@ -9,8 +9,9 @@ Your AI Nutrition Companion — snap a photo of any meal and instantly get detai
 
 ## Features
 
-- **AI Meal Analysis** — Take a photo and get per-item nutrition breakdown (16 nutrients) powered by Google Gemini
+- **AI Meal Analysis** — Take a photo and get per-item nutrition breakdown (16 nutrients) powered by Google Gemini, with a scanning UI overlay during analysis
 - **Barcode Scanning** — Scan packaged food barcodes for instant nutrition lookup
+- **Capture/Scan/Manual Toggle** — Switch between photo capture, barcode scan, and manual entry modes on the Snap tab
 - **Food Diary** — Browse and review meals logged by date
 - **BMI & BMR Insights** — View your BMI and BMR on the home screen with an educational info page explaining how your nutrition targets are calculated
 - **Progress Tracking** — Weekly and monthly charts for calories, macros, and nutrition trends
