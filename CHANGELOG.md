@@ -7,6 +7,7 @@
 - Fixed camera and barcode scanner crash in release mode (ProGuard rules for CameraX/ML Kit)
 - Fixed oval-shaped loading spinner on login button
 - Removed scan limit from barcode lookup (uses free Open Food Facts API, not Gemini)
+- Fixed delete snackbar text not visible and not auto-dismissing
 
 ### New Features
 - BMI & BMR display card on home screen with color-coded BMI category
