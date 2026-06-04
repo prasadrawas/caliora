@@ -1370,6 +1370,15 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
         });
         setState(() {});
       }
+      // Dispose all controllers
+      for (final c in [
+        nameCtrl, portionCtrl, caloriesCtrl, proteinCtrl, carbsCtrl,
+        fatCtrl, fiberCtrl, sugarCtrl, satFatCtrl, sodiumCtrl,
+        potassiumCtrl, calciumCtrl, ironCtrl, magnesiumCtrl,
+        vitACtrl, vitCCtrl, vitDCtrl, vitB12Ctrl,
+      ]) {
+        c.dispose();
+      }
     });
   }
 
