@@ -1,5 +1,23 @@
 /// Mifflin-St Jeor equation for BMR and macro target calculation
 class NutritionCalculator {
+  /// Calculate BMI (Body Mass Index)
+  /// weight in kg, height in cm
+  static double calculateBMI({
+    required double weight,
+    required double height,
+  }) {
+    final heightM = height / 100;
+    return weight / (heightM * heightM);
+  }
+
+  /// Get BMI category label
+  static String bmiCategory(double bmi) {
+    if (bmi < 18.5) return 'Underweight';
+    if (bmi < 25) return 'Normal';
+    if (bmi < 30) return 'Overweight';
+    return 'Obese';
+  }
+
   /// Calculate BMR using Mifflin-St Jeor formula
   /// weight in kg, height in cm, age in years
   /// gender: 'male' or 'female'

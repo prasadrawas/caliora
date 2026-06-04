@@ -5,6 +5,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:confetti/confetti.dart';
 import '../../core/config/app_config.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/utils/nutrition_calculator.dart';
 import '../../core/utils/date_utils.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/profile_provider.dart';
@@ -128,7 +129,102 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         CalorieRing(consumed: 0, target: AppConfig.defaultCalorieTarget),
                   ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
+
+                // BMI & BMR Card
+                profileAsync.when(
+                  data: (profile) {
+                    if (profile == null) return const SizedBox.shrink();
+                    final bmi = NutritionCalculator.calculateBMI(
+                      weight: profile.weight,
+                      height: profile.height,
+                    );
+                    final bmr = NutritionCalculator.calculateBMR(
+                      weight: profile.weight,
+                      height: profile.height,
+                      age: profile.age,
+                      gender: profile.gender,
+                    );
+                    final category = NutritionCalculator.bmiCategory(bmi);
+                    final categoryColor = bmi < 18.5
+                        ? AppColors.water
+                        : bmi < 25
+                            ? AppColors.accentGreen
+                            : bmi < 30
+                                ? AppColors.warning
+                                : AppColors.error;
+
+                    return Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: C.of(context).card,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: C.of(context).glassBorder),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              children: [
+                                Text('BMI',
+                                    style: TextStyle(
+                                        color: C.of(context).text54,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600)),
+                                const SizedBox(height: 4),
+                                Text(bmi.toStringAsFixed(1),
+                                    style: TextStyle(
+                                        color: categoryColor,
+                                        fontSize: 24,
+                                        fontWeight: FontWeight.w800)),
+                                const SizedBox(height: 2),
+                                Text(category,
+                                    style: TextStyle(
+                                        color: categoryColor,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600)),
+                              ],
+                            ),
+                          ),
+                          Container(
+                            width: 1,
+                            height: 50,
+                            color: C.of(context).glassBorder,
+                          ),
+                          Expanded(
+                            child: Column(
+                              children: [
+                                Text('BMR',
+                                    style: TextStyle(
+                                        color: C.of(context).text54,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600)),
+                                const SizedBox(height: 4),
+                                Text(bmr.round().toString(),
+                                    style: TextStyle(
+                                        color: C.of(context).text,
+                                        fontSize: 24,
+                                        fontWeight: FontWeight.w800)),
+                                const SizedBox(height: 2),
+                                Text('kcal/day',
+                                    style: TextStyle(
+                                        color: C.of(context).text54,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600)),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                        .animate()
+                        .fadeIn(duration: 500.ms, delay: 150.ms)
+                        .slideY(begin: 0.1, end: 0);
+                  },
+                  loading: () => const ShimmerLoader(height: 80),
+                  error: (_, _) => const SizedBox.shrink(),
+                ),
+                const SizedBox(height: 16),
 
                 // Macro Targets
                 profileAsync.when(
