@@ -1536,6 +1536,7 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
             ? _analyzedItems.first.portion
             : '${_analyzedItems.length} items',
         itemsDetected: _analyzedItems.map((i) => i.toString()).toList(),
+        items: _analyzedItems.map((i) => i.copy()).toList(),
       );
 
       final firestoreService = ref.read(firestoreServiceProvider);

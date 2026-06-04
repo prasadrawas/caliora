@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'analyzed_item.dart';
 
 class MealEntry {
   final String id;
@@ -28,6 +29,7 @@ class MealEntry {
   final DateTime timestamp;
   final String servingSize;
   final List<String> itemsDetected;
+  final List<AnalyzedItem> items;
 
   MealEntry({
     required this.id,
@@ -53,6 +55,7 @@ class MealEntry {
     DateTime? timestamp,
     this.servingSize = '1 serving',
     this.itemsDetected = const [],
+    this.items = const [],
   }) : timestamp = timestamp ?? DateTime.now();
 
   factory MealEntry.fromFirestore(DocumentSnapshot doc) {
@@ -82,6 +85,10 @@ class MealEntry {
           (data['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
       servingSize: data['servingSize'] ?? '1 serving',
       itemsDetected: List<String>.from(data['itemsDetected'] ?? []),
+      items: (data['items'] as List<dynamic>?)
+              ?.map((i) => AnalyzedItem.fromMap(i as Map<String, dynamic>))
+              .toList() ??
+          [],
     );
   }
 
@@ -109,6 +116,7 @@ class MealEntry {
       'timestamp': Timestamp.fromDate(timestamp),
       'servingSize': servingSize,
       'itemsDetected': itemsDetected,
+      'items': items.map((i) => i.toMap()).toList(),
     };
   }
 
@@ -135,6 +143,7 @@ class MealEntry {
     DateTime? timestamp,
     String? servingSize,
     List<String>? itemsDetected,
+    List<AnalyzedItem>? items,
   }) {
     return MealEntry(
       id: id,
@@ -160,6 +169,7 @@ class MealEntry {
       timestamp: timestamp ?? this.timestamp,
       servingSize: servingSize ?? this.servingSize,
       itemsDetected: itemsDetected ?? this.itemsDetected,
+      items: items ?? this.items,
     );
   }
 

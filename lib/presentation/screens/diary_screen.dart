@@ -248,32 +248,57 @@ class _DiaryScreenState extends ConsumerState<DiaryScreen> {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    // Item Card
+                    // Items
                     Text('Items', style: TextStyle(
                       fontSize: 14, fontWeight: FontWeight.w600, color: C.of(context).text54)),
                     const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                      decoration: BoxDecoration(
-                        color: C.of(context).card,
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: C.of(context).glassBorder),
+                    if (meal.items.isNotEmpty)
+                      ...meal.items.map((item) => Container(
+                        margin: const EdgeInsets.only(bottom: 8),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: C.of(context).card,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: C.of(context).glassBorder),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(item.name, style: TextStyle(
+                              fontSize: 14, fontWeight: FontWeight.w700, color: C.of(context).text)),
+                            const SizedBox(height: 2),
+                            Text(item.portion, style: const TextStyle(
+                              fontSize: 12, color: AppColors.accentGreen, fontWeight: FontWeight.w500)),
+                            const SizedBox(height: 4),
+                            Text(
+                              '${item.calories} kcal  •  P ${item.protein.toStringAsFixed(1)}g  •  C ${item.carbs.toStringAsFixed(1)}g  •  F ${item.fat.toStringAsFixed(1)}g',
+                              style: TextStyle(fontSize: 11, color: C.of(context).text54)),
+                          ],
+                        ),
+                      ))
+                    else
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: C.of(context).card,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: C.of(context).glassBorder),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(meal.mealName, style: TextStyle(
+                              fontSize: 14, fontWeight: FontWeight.w700, color: C.of(context).text)),
+                            const SizedBox(height: 2),
+                            Text(meal.servingSize, style: const TextStyle(
+                              fontSize: 12, color: AppColors.accentGreen, fontWeight: FontWeight.w500)),
+                            const SizedBox(height: 4),
+                            Text(
+                              '${meal.calories} kcal  •  P ${meal.protein.toStringAsFixed(1)}g  •  C ${meal.carbs.toStringAsFixed(1)}g  •  F ${meal.fat.toStringAsFixed(1)}g',
+                              style: TextStyle(fontSize: 11, color: C.of(context).text54)),
+                          ],
+                        ),
                       ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(meal.mealName, style: TextStyle(
-                            fontSize: 14, fontWeight: FontWeight.w700, color: C.of(context).text)),
-                          const SizedBox(height: 2),
-                          Text(meal.servingSize, style: const TextStyle(
-                            fontSize: 12, color: AppColors.accentGreen, fontWeight: FontWeight.w500)),
-                          const SizedBox(height: 4),
-                          Text(
-                            '${meal.calories} kcal  •  P ${meal.protein.toStringAsFixed(1)}g  •  C ${meal.carbs.toStringAsFixed(1)}g  •  F ${meal.fat.toStringAsFixed(1)}g',
-                            style: TextStyle(fontSize: 11, color: C.of(context).text54)),
-                        ],
-                      ),
-                    ),
                     const SizedBox(height: 16),
                     // Macro Summary
                     Container(

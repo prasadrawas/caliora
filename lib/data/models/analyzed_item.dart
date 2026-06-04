@@ -90,6 +90,52 @@ class AnalyzedItem {
     );
   }
 
+  Map<String, dynamic> toMap() {
+    return {
+      'name': name,
+      'portion': portion,
+      'calories': calories,
+      'protein': protein,
+      'carbs': carbs,
+      'fat': fat,
+      'fiber': fiber,
+      'sugar': sugar,
+      'saturatedFat': saturatedFat,
+      'sodium': sodium,
+      'potassium': potassium,
+      'calcium': calcium,
+      'iron': iron,
+      'magnesium': magnesium,
+      'vitaminA': vitaminA,
+      'vitaminC': vitaminC,
+      'vitaminD': vitaminD,
+      'vitaminB12': vitaminB12,
+    };
+  }
+
+  factory AnalyzedItem.fromMap(Map<String, dynamic> map) {
+    return AnalyzedItem(
+      name: map['name'] ?? 'Unknown',
+      portion: map['portion'] ?? '1 serving',
+      calories: (map['calories'] ?? 0).toInt(),
+      protein: (map['protein'] ?? 0).toDouble(),
+      carbs: (map['carbs'] ?? 0).toDouble(),
+      fat: (map['fat'] ?? 0).toDouble(),
+      fiber: (map['fiber'] ?? 0).toDouble(),
+      sugar: (map['sugar'] ?? 0).toDouble(),
+      saturatedFat: (map['saturatedFat'] ?? 0).toDouble(),
+      sodium: (map['sodium'] ?? 0).toDouble(),
+      potassium: (map['potassium'] ?? 0).toDouble(),
+      calcium: (map['calcium'] ?? 0).toDouble(),
+      iron: (map['iron'] ?? 0).toDouble(),
+      magnesium: (map['magnesium'] ?? 0).toDouble(),
+      vitaminA: (map['vitaminA'] ?? 0).toDouble(),
+      vitaminC: (map['vitaminC'] ?? 0).toDouble(),
+      vitaminD: (map['vitaminD'] ?? 0).toDouble(),
+      vitaminB12: (map['vitaminB12'] ?? 0).toDouble(),
+    );
+  }
+
   @override
   String toString() => '$name ($portion)';
 }
