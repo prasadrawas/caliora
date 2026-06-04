@@ -105,10 +105,14 @@ class _DiaryScreenState extends ConsumerState<DiaryScreen> {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('${meal.mealName} deleted'),
-        backgroundColor: C.of(context).card,
+        content: Text(
+          '${meal.mealName} deleted',
+          style: const TextStyle(color: Colors.white),
+        ),
+        backgroundColor: Colors.grey[900],
         behavior: SnackBarBehavior.floating,
         duration: const Duration(seconds: 4),
+        dismissDirection: DismissDirection.horizontal,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         action: SnackBarAction(
           label: 'Undo',
