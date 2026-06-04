@@ -628,7 +628,6 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
   Future<void> _handleBarcode(String barcode) async {
     final user = ref.read(currentUserProvider);
     if (user == null) return;
-    if (!await _checkScanLimit()) return;
 
     log.i('[Snap] Barcode lookup: $barcode');
     setState(() {
@@ -647,7 +646,6 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
       }
 
       if (mounted) {
-        await _scanLimitService.incrementCount(user.uid);
         setState(() {
           _mealName = result.mealName;
           _analyzedItems = [
