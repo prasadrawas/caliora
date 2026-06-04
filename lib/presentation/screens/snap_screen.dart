@@ -1477,11 +1477,14 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
 
   Future<void> _reAnalyse(StateSetter setSheetState,
       {bool forceAll = false}) async {
+    if (!await _checkScanLimit()) return;
+
     _isRecalculating = true;
     setSheetState(() {});
     setState(() {});
 
     try {
+      final user = ref.read(currentUserProvider);
       final gemini = ref.read(geminiServiceProvider);
 
       // For first-time AI analysis, reset isUserEdited so all items get analysed
@@ -1494,6 +1497,7 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
       final result = await gemini.recalculateItems(_analyzedItems);
 
       if (result != null && mounted) {
+        if (user != null) await _scanLimitService.incrementCount(user.uid);
         _analyzedItems = result;
         _hasEdits = false;
         _hasBeenAnalysed = true;
