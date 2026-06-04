@@ -25,13 +25,16 @@ class HomeShell extends StatefulWidget {
 class _HomeShellState extends State<HomeShell> {
   int _currentIndex = 0;
   bool _showTooltips = false;
+  String? _pendingBarcode;
 
-  final _screens = const [
-    HomeScreen(),
-    DiaryScreen(),
-    SnapScreen(),
-    ProgressScreen(),
-    SettingsScreen(),
+  List<Widget> get _screens => [
+    const HomeScreen(),
+    const DiaryScreen(),
+    _pendingBarcode != null
+        ? SnapScreen(key: ValueKey(_pendingBarcode), initialBarcode: _pendingBarcode)
+        : const SnapScreen(),
+    const ProgressScreen(),
+    const SettingsScreen(),
   ];
 
   @override
@@ -210,12 +213,11 @@ class _HomeShellState extends State<HomeShell> {
     Navigator.of(context).push<String>(
       MaterialPageRoute(builder: (_) => const BarcodeScreen()),
     ).then((barcode) {
-      if (barcode != null) {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => SnapScreen(initialBarcode: barcode),
-          ),
-        );
+      if (barcode != null && mounted) {
+        setState(() {
+          _pendingBarcode = barcode;
+          _currentIndex = 2;
+        });
       }
     });
   }
@@ -259,7 +261,10 @@ class _HomeShellState extends State<HomeShell> {
           ),
           bottomNavigationBar: AnimatedBottomNav(
             currentIndex: _currentIndex,
-            onTap: (index) => setState(() => _currentIndex = index),
+            onTap: (index) => setState(() {
+              if (index != 2) _pendingBarcode = null;
+              _currentIndex = index;
+            }),
           ),
           floatingActionButton: _currentIndex == 2 ? null : FloatingActionButton(
             onPressed: _showLogMenu,
