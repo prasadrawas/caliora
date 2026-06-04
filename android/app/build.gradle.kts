@@ -61,6 +61,7 @@ kotlin {
 
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
+    debugImplementation("com.google.firebase:firebase-appcheck-debug:18.0.0")
 }
 
 flutter {
