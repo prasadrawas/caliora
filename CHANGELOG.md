@@ -15,6 +15,15 @@
 - Fixed Analyse with AI and Re-Analyse not calling Gemini for manual/edited items
 - Log Meal now requires meal name and at least one named item
 - Meal score hidden in manual mode until AI analysis is done
+- Clamped BMI/BMR inputs to realistic ranges (prevents nonsensical values)
+- Network errors in auth now show user-friendly message
+- Google sign-in cancellation no longer shows error
+- Improved email validation with proper regex
+- Rejected whitespace-only passwords
+- Splash screen no longer hangs on Firestore error
+- Forgot password validates email format before sending
+- Pull-to-refresh now awaits actual data instead of fake delay
+- Prevented confetti stacking on rapid meal logging
 
 ### New Features
 - BMI & BMR display card on home screen with color-coded BMI category
@@ -32,6 +41,15 @@
 - Keyboard now dismisses on submit across all screens
 
 ### Improvements
+- Snackbar message shown when daily calorie goal is achieved
+- Motivational "Start your streak today!" message when streak is 0
+- Tooltip on meal card to reveal full name on long press
+- Visible green-tinted placeholder for meal card images
+- Shimmer loading for minerals/vitamins and streak sections
+- Keyboard actions on login form (Next/Done with auto-submit)
+- PopScope on login and profile setup screens
+- Forgot password dismisses keyboard
+- Password visibility toggle has accessibility tooltip
 - Moved onboarding screen to first home visit instead of after registration
 - New users now go directly to profile setup after sign-up for a smoother flow
 - Added tappable Terms of Service and Privacy Policy links on login screen
