@@ -1043,9 +1043,8 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
                               child: OutlinedButton.icon(
                                 onPressed: _isRecalculating
                                     ? null
-                                    : () {
-                                        _reAnalyse(setSheetState);
-                                        _hasBeenAnalysed = true;
+                                    : () async {
+                                        await _reAnalyse(setSheetState);
                                       },
                                 icon: _isRecalculating
                                     ? const SizedBox(
@@ -1460,7 +1459,8 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
   // ── Re-Analyse ────────────────────────────────────────────────────────
 
   Future<void> _reAnalyse(StateSetter setSheetState) async {
-    setSheetState(() => _isRecalculating = true);
+    _isRecalculating = true;
+    setSheetState(() {});
     setState(() {});
 
     try {
@@ -1469,12 +1469,11 @@ class _SnapScreenState extends ConsumerState<SnapScreen> {
       final result = await gemini.recalculateItems(_analyzedItems);
 
       if (result != null && mounted) {
-        setState(() {
-          _analyzedItems = result;
-          _hasEdits = false;
-          _hasBeenAnalysed = true;
-        });
+        _analyzedItems = result;
+        _hasEdits = false;
+        _hasBeenAnalysed = true;
         setSheetState(() {});
+        setState(() {});
         HapticFeedback.mediumImpact();
       }
     } catch (e) {
