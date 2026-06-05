@@ -22,9 +22,9 @@ class AnimatedBottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bottomPadding = MediaQuery.of(context).viewPadding.bottom;
-    return Container(
-      margin: EdgeInsets.fromLTRB(16, 16, 16, 16 + bottomPadding),
+    return SafeArea(
+      child: Container(
+      margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       decoration: BoxDecoration(
         color: C.of(context).card,
@@ -86,6 +86,7 @@ class AnimatedBottomNav extends StatelessWidget {
           );
         }),
       ),
+    ),
     );
   }
 }
