@@ -1,4 +1,5 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import '../../core/utils/app_logger.dart';
@@ -16,6 +17,9 @@ class NotificationService {
     if (_initialized) return;
 
     tz.initializeTimeZones();
+    final tzInfo = await FlutterTimezone.getLocalTimezone();
+    tz.setLocalLocation(tz.getLocation(tzInfo.identifier));
+    log.i('[Notifications] Timezone set to: ${tzInfo.identifier}');
 
     const androidSettings =
         AndroidInitializationSettings('@mipmap/ic_launcher');
@@ -83,7 +87,7 @@ class NotificationService {
         ),
         iOS: DarwinNotificationDetails(),
       ),
-      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       matchDateTimeComponents: DateTimeComponents.time,
     );
     log.i('[Notifications] Scheduled reminder #$id at $hour:${minute.toString().padLeft(2, '0')}');
