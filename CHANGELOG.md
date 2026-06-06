@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.1.2 (2026-06-06)
+
+### Bug Fixes
+- Fixed meal name TextField memory leak in snap result sheet
+- Clamped water intake to 10,000ml max
+- Water tracker uses configurable target from AppConfig
+
 ## 1.1.1 (2026-06-05)
 
 ### Bug Fixes
